@@ -102,6 +102,7 @@ tr:hover td{background:color-mix(in srgb,var(--ac) 7%,transparent)}
 
 <script>
 const SHEET_ID='12j1vVjdi-fmQv-8dDx1G9VXxgaBNcLHhK1xn6O_dVUQ',TAB='Form Responses 1';
+const URL_JSON=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&headers=1&sheet=${encodeURIComponent(TAB)}`;
 const URL_CSV=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&headers=1&sheet=${encodeURIComponent(TAB)}`;
 // Snapshot data (dipakai jika Google Sheets tidak bisa diakses)
 const SNAP=[['2026-11-01','in',13700000,'tukin'],['2026-11-01','in',3946300,'Gaji'],['2026-11-01','out',3964173.71,'cicilan'],['2026-11-02','out',2500,'admin BSI'],['2026-11-01','out',105800,'ramen joffi'],['2026-11-01','tf',6503000,'top up shopeepay'],['2026-11-01','out',250,'admin topup shopeepay'],['2026-11-01','out',5000000,'Transfer ke istri'],['2026-11-01','out',1000000,'tf ibuk'],['2026-11-02','out',495937,'Token PLN'],['2026-11-02','in',34,'Bunga Seabank']];
@@ -130,9 +131,18 @@ function fromCSV(t){skipped=[];return parseCSV(t).slice(1).map(r=>{if(r.every(c=
   if(d&&ty&&!isNaN(a))return{d,t:ty,a,n:(r[4]||'').trim()};
   skipped.push(r.join(' | '));return null}).filter(Boolean)}
 
+function gd(v){const m=String(v).match(/^Date\((\d+),(\d+),(\d+)/);return m?`${m[1]}-${String(+m[2]+1).padStart(2,'0')}-${m[3].padStart(2,'0')}`:pdate(v)}
+function fromJSON(t){skipped=[];const j=JSON.parse(t.slice(t.indexOf('{'),t.lastIndexOf('}')+1));
+  return j.table.rows.map(r=>{const c=r.c.map(x=>x?(x.v!=null?x.v:(x.f!=null?x.f:'')):'');
+    if(c.every(x=>x===''))return null;
+    const d=gd(c[1]),a=typeof c[3]=='number'?c[3]:num(c[3]),k=String(c[2]||'').toLowerCase();
+    const ty=k.includes('transfer')?'tf':k.includes('masuk')?'in':k.includes('keluar')?'out':null;
+    if(d&&ty&&!isNaN(a))return{d,t:ty,a,n:String(c[4]==null?'':c[4]).trim()};
+    skipped.push(c.join(' | '));return null}).filter(Boolean)}
+
 async function load(){
   $('upd').textContent='memuat…';
-  try{const res=await fetch(URL_CSV,{cache:'no-store'});if(!res.ok)throw 0;const data=fromCSV(await res.text());if(!data.length)throw 0;rows=data;live=true}
+  try{let data;try{const r1=await fetch(URL_JSON,{cache:'no-store'});if(!r1.ok)throw 0;data=fromJSON(await r1.text())}catch(e){const r2=await fetch(URL_CSV,{cache:'no-store'});if(!r2.ok)throw 0;data=fromCSV(await r2.text())}if(!data.length)throw 0;rows=data;live=true}
   catch(e){rows=SNAP.map(([d,t,a,n])=>({d,t,a,n}));live=false}
   $('src').textContent=(live?'● Live dari Google Sheets':'Data contoh (snapshot)')+(skipped.length?` · ${skipped.length} baris dilewati`:'');$('src').title=skipped.join('\n');if(skipped.length)console.warn('Baris dilewati:',skipped);$('src').className='badge'+(live?' live':'');
   $('upd').textContent='diperbarui '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
