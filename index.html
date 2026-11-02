@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pitih Kalua – Dashboard Keuangan</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f1f5fb;--sf:#fff;--sf2:#e9eef7;--ink:#14213d;--mut:#5d6b86;--bd:#d9e1ee;--ac:#2f5bea;--in:#0c9366;--out:#d93a55;--tf:#c98a0b;--sh:0 1px 2px rgba(20,33,61,.06),0 6px 20px rgba(20,33,61,.05);color-scheme:light}
+:root[data-theme=dark]{--bg:#0e1527;--sf:#18213a;--sf2:#222d4d;--ink:#e8edf8;--mut:#93a1c0;--bd:#2c3858;--ac:#6f93ff;--in:#35d3a0;--out:#ff6b85;--tf:#f0b94a;--sh:0 1px 2px rgba(0,0,0,.3);color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;transition:background .25s,color .25s}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+h1{font-size:1.5rem;font-weight:800;margin:0;letter-spacing:-.02em}
+.sub{color:var(--mut);font-size:.85rem}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:8px 14px;cursor:pointer;transition:background .15s,border-color .15s}
+.btn:hover{border-color:var(--ac)}
+.btn.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.badge{font-size:.78rem;padding:4px 10px;border-radius:99px;background:var(--sf2);color:var(--mut)}
+.badge.live{background:color-mix(in srgb,var(--in) 18%,transparent);color:var(--in)}
+.panel{background:var(--sf);border:1px solid var(--bd);border-radius:16px;box-shadow:var(--sh);padding:16px}
+.filters{display:grid;gap:12px;margin-bottom:16px}
+.filters label{font-size:.8rem;color:var(--mut);display:block;margin-bottom:4px}
+.filters input,.filters select{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:8px 10px}
+#q{min-width:220px;flex:1}
+.kpis{display:grid;grid-template-columns:1.5fr repeat(3,1fr);gap:14px;margin-bottom:16px}
+.kpi{border-radius:16px;padding:16px;background:var(--sf);border:1px solid var(--bd);box-shadow:var(--sh);border-top:4px solid var(--c,var(--bd))}
+.kpi .l{color:var(--mut);font-size:.85rem}
+.kpi .v{font-size:1.5rem;font-weight:800;letter-spacing:-.02em;margin:4px 0;font-variant-numeric:tabular-nums}
+.kpi.main{--c:var(--ac);background:linear-gradient(135deg,color-mix(in srgb,var(--ac) 14%,var(--sf)),var(--sf))}
+.kpi.main .v{font-size:2.1rem}
+.kpi small{color:var(--mut)}
+.kpi input{width:150px;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:4px 8px;margin-left:6px}
+.charts{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:16px}
+.charts h2,.tbl h2{font-size:1rem;margin:0 0 4px}
+.cv{position:relative;height:290px}
+.tbl .top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.sc{max-height:420px;overflow:auto;border-radius:10px;border:1px solid var(--bd)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{padding:10px 12px;text-align:left;white-space:nowrap}
+th{position:sticky;top:0;background:var(--sf2);cursor:pointer;user-select:none;font-weight:600}
+td{border-top:1px solid var(--bd)}
+tr:hover td{background:color-mix(in srgb,var(--ac) 7%,transparent)}
+.r{text-align:right;font-variant-numeric:tabular-nums}
+.tag{font-size:.78rem;padding:2px 9px;border-radius:99px;font-weight:600}
+.t-in{background:color-mix(in srgb,var(--in) 16%,transparent);color:var(--in)}
+.t-out{background:color-mix(in srgb,var(--out) 16%,transparent);color:var(--out)}
+.t-tf{background:color-mix(in srgb,var(--tf) 18%,transparent);color:var(--tf)}
+.empty{padding:32px;text-align:center;color:var(--mut)}
+@media(max-width:860px){.kpis{grid-template-columns:1fr 1fr}.kpi.main{grid-column:1/-1}.charts{grid-template-columns:1fr}}
+@media(max-width:460px){.kpis{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><h1>Pitih Kalua</h1><div class="sub">Catatan pemasukan dan pengeluaran · <span id="upd">memuat…</span></div></div>
+  <div class="row"><span id="src" class="badge">…</span>
+    <button class="btn" id="rf" title="Muat ulang data dari Google Sheets">Muat ulang</button>
+    <button class="btn" id="th" aria-label="Ganti tema">🌙</button></div>
+</header>
+
+<section class="panel filters" aria-label="Filter">
+  <div class="row" id="per"></div>
+  <div class="row">
+    <div><label for="fr">Dari</label><input type="date" id="fr"></div>
+    <div><label for="to">Sampai</label><input type="date" id="to"></div>
+    <div><label for="ty">Jenis</label><select id="ty"><option value="all">Semua jenis</option><option value="in">Uang masuk</option><option value="out">Uang keluar</option><option value="tf">Transfer antar rekening</option></select></div>
+    <div style="flex:1"><label for="q">Cari keterangan</label><input id="q" type="search" placeholder="mis. cicilan, token, gaji"></div>
+    <button class="btn" id="rs" style="align-self:end">Reset filter</button>
+  </div>
+</section>
+
+<section class="kpis">
+  <div class="kpi main"><div class="l">Saldo saat ini</div><div class="v" id="k-saldo">–</div>
+    <small>Saldo awal<input id="awal" type="number" min="0" step="1000" placeholder="0" aria-label="Saldo awal"></small>
+    <div><small>Saldo awal + semua masuk − semua keluar. Transfer antar rekening tidak mengubah saldo.</small></div></div>
+  <div class="kpi" style="--c:var(--in)"><div class="l">Total pemasukan</div><div class="v" id="k-in" style="color:var(--in)">–</div><small id="n-in"></small></div>
+  <div class="kpi" style="--c:var(--out)"><div class="l">Total pengeluaran</div><div class="v" id="k-out" style="color:var(--out)">–</div><small id="n-out"></small></div>
+  <div class="kpi" style="--c:var(--tf)"><div class="l">Transfer antar rekening</div><div class="v" id="k-tf" style="color:var(--tf)">–</div><small id="n-net"></small></div>
+</section>
+
+<section class="charts">
+  <div class="panel"><h2>Arus kas harian</h2><div class="sub">Klik batang untuk melihat transaksi hari itu</div><div class="cv"><canvas id="c1"></canvas></div></div>
+  <div class="panel"><h2>Rincian pengeluaran</h2><div class="sub">Klik irisan untuk mencari item tersebut</div><div class="cv"><canvas id="c2"></canvas></div></div>
+</section>
+
+<section class="panel tbl">
+  <div class="top"><h2>Transaksi <span class="sub" id="cnt"></span></h2><button class="btn" id="ex">Unduh CSV</button></div>
+  <div class="sc"><table><thead><tr>
+    <th data-k="d">Tanggal ↕</th><th data-k="t">Jenis ↕</th><th data-k="n">Keterangan ↕</th><th data-k="a" class="r">Jumlah ↕</th></tr></thead>
+    <tbody id="tb"></tbody></table><div id="em" class="empty" hidden>Tidak ada transaksi yang cocok. Ubah atau reset filter.</div></div>
+</section>
+</div>
+
+<script>
+const SHEET_ID='12j1vVjdi-fmQv-8dDx1G9VXxgaBNcLHhK1xn6O_dVUQ',TAB='Form Responses 1';
+const URL_CSV=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(TAB)}`;
+// Snapshot data (dipakai jika Google Sheets tidak bisa diakses)
+const SNAP=[['2026-11-01','in',13700000,'tukin'],['2026-11-01','in',3946300,'Gaji'],['2026-11-01','out',3964173.71,'cicilan'],['2026-11-02','out',2500,'admin BSI'],['2026-11-01','out',105800,'ramen joffi'],['2026-11-01','tf',6503000,'top up shopeepay'],['2026-11-01','out',250,'admin topup shopeepay'],['2026-11-01','out',5000000,'Transfer ke istri'],['2026-11-01','out',1000000,'tf ibuk'],['2026-11-02','out',495937,'Token PLN'],['2026-11-02','in',34,'Bunga Seabank']];
+const $=id=>document.getElementById(id);
+const rp=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:2}).format(n);
+const rp0=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n);
+const TL={in:'Uang masuk',out:'Uang keluar',tf:'Transfer'};
+const PERS=[['all','Semua'],['today','Hari ini'],['7','7 hari'],['month','Bulan ini'],['custom','Kustom']];
+const store={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+let rows=[],f={per:'all',fr:'',to:'',ty:'all',q:''},sort={k:'d',dir:-1},ch1,ch2,live=false;
+
+function parseCSV(t){const o=[];let r=[],c='',q=false;for(let i=0;i<t.length;i++){const x=t[i];if(q){if(x=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=x}else if(x=='"')q=true;else if(x==','){r.push(c);c=''}else if(x=='\n'||x=='\r'){if(x=='\r'&&t[i+1]=='\n')i++;r.push(c);o.push(r);r=[];c=''}else c+=x}
+  if(c||r.length){r.push(c);o.push(r)}return o}
+function num(s){s=String(s).replace(/[^\d.,-]/g,'');if(!s)return NaN;const d=s.lastIndexOf('.'),k=s.lastIndexOf(',');
+  if(d>-1&&k>-1)s=d>k?s.replace(/,/g,''):s.replace(/\./g,'').replace(',','.');
+  else if(k>-1)s=/,\d{1,2}$/.test(s)?s.replace(',','.'):s.replace(/,/g,'');
+  else if(/^-?\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,'');
+  return parseFloat(s)}
+function pdate(s){s=String(s).trim();let m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[0]:null}
+function fromCSV(t){return parseCSV(t).slice(1).map(r=>{const d=pdate(r[1]||r[0]),a=num(r[3]),k=(r[2]||'').toLowerCase();
+  const ty=k.includes('transfer')?'tf':k.includes('masuk')?'in':k.includes('keluar')?'out':null;
+  return d&&ty&&!isNaN(a)?{d,t:ty,a,n:(r[4]||'').trim()}:null}).filter(Boolean)}
+
+async function load(){
+  $('upd').textContent='memuat…';
+  try{const res=await fetch(URL_CSV,{cache:'no-store'});if(!res.ok)throw 0;const data=fromCSV(await res.text());if(!data.length)throw 0;rows=data;live=true}
+  catch(e){rows=SNAP.map(([d,t,a,n])=>({d,t,a,n}));live=false}
+  $('src').textContent=live?'● Live dari Google Sheets':'Data contoh (snapshot)';$('src').className='badge'+(live?' live':'');
+  $('upd').textContent='diperbarui '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+  render()}
+
+const iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+function range(){const n=new Date(),t=iso(n);
+  if(f.per=='today')return[t,t];
+  if(f.per=='7'){const s=new Date(n);s.setDate(n.getDate()-6);return[iso(s),t]}
+  if(f.per=='month')return[t.slice(0,8)+'01',t];
+  if(f.per=='custom')return[f.fr,f.to];return['','']}
+function filtered(){const[a,b]=range(),q=f.q.toLowerCase();
+  return rows.filter(r=>(!a||r.d>=a)&&(!b||r.d<=b)&&(f.ty=='all'||r.t==f.ty)&&(!q||r.n.toLowerCase().includes(q)))}
+const sum=(l,t)=>l.filter(r=>r.t==t).reduce((s,r)=>s+r.a,0);
+const cnt=(l,t)=>l.filter(r=>r.t==t).length;
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const fd=d=>new Date(d+'T00:00').toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+
+function render(){
+  const l=filtered(),awal=parseFloat($('awal').value)||0,all=sum(rows,'in')-sum(rows,'out')+awal;
+  $('k-saldo').textContent=rp(all);$('k-in').textContent=rp0(sum(l,'in'));$('k-out').textContent=rp0(sum(l,'out'));$('k-tf').textContent=rp0(sum(l,'tf'));
+  $('n-in').textContent=cnt(l,'in')+' transaksi';$('n-out').textContent=cnt(l,'out')+' transaksi';
+  const net=sum(l,'in')-sum(l,'out');$('n-net').textContent='Selisih periode ini: '+(net>=0?'+':'−')+rp0(Math.abs(net));
+  $('per').innerHTML=PERS.map(([k,v])=>`<button class="btn${f.per==k?' on':''}" data-p="${k}">${v}</button>`).join('');
+  $('cnt').textContent=`(${l.length} dari ${rows.length})`;
+  const s=[...l].sort((x,y)=>{const a=x[sort.k],b=y[sort.k];return(a>b?1:a<b?-1:0)*sort.dir});
+  $('tb').innerHTML=s.map(r=>`<tr><td>${fd(r.d)}</td><td><span class="tag t-${r.t}">${TL[r.t]}</span></td><td>${r.n.replace(/[<&]/g,c=>c=='<'?'&lt;':'&amp;')||'–'}</td><td class="r" style="color:var(--${r.t})">${r.t=='in'?'+':r.t=='out'?'−':''}${rp(r.a)}</td></tr>`).join('');
+  $('em').hidden=l.length>0;charts(l)}
+
+function charts(l){
+  Chart.defaults.color=css('--mut');Chart.defaults.font.family='"Plus Jakarta Sans",system-ui,sans-serif';
+  const days=[...new Set(l.map(r=>r.d))].sort(),bd=css('--bd');let cum=0;
+  const di=days.map(d=>sum(l.filter(r=>r.d==d),'in')),dout=days.map(d=>sum(l.filter(r=>r.d==d),'out'));
+  const cu=days.map((_,i)=>cum+=di[i]-dout[i]);
+  ch1&&ch1.destroy();
+  ch1=new Chart($('c1'),{data:{labels:days.map(fd),datasets:[
+    {type:'line',label:'Kumulatif (masuk − keluar)',data:cu,borderColor:css('--ac'),backgroundColor:css('--ac'),tension:.3,yAxisID:'y'},
+    {type:'bar',label:'Masuk',data:di,backgroundColor:css('--in'),borderRadius:6},
+    {type:'bar',label:'Keluar',data:dout,backgroundColor:css('--out'),borderRadius:6}]},
+    options:{maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      onClick:(e,els)=>{const b=els.find(x=>x.datasetIndex>0);if(b){f.per='custom';f.fr=f.to=days[b.index];$('fr').value=$('to').value=f.fr;render()}},
+      plugins:{tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${rp0(c.parsed.y)}`}}},
+      scales:{x:{grid:{color:bd}},y:{grid:{color:bd},ticks:{callback:v=>v>=1e6?(v/1e6)+' jt':v}}}}});
+  const g={};l.filter(r=>r.t=='out').forEach(r=>{const k=r.n||'Lainnya';g[k]=(g[k]||0)+r.a});
+  let e=Object.entries(g).sort((a,b)=>b[1]-a[1]);if(e.length>6){const o=e.slice(6).reduce((s,x)=>s+x[1],0);e=e.slice(0,6).concat([['Lainnya',o]])}
+  const pal=['#2f5bea','#d93a55','#c98a0b','#0c9366','#8b5cf6','#06b6d4','#94a3b8'];
+  ch2&&ch2.destroy();
+  ch2=new Chart($('c2'),{type:'doughnut',data:{labels:e.map(x=>x[0]),datasets:[{data:e.map(x=>x[1]),backgroundColor:pal,borderColor:css('--sf'),borderWidth:2}]},
+    options:{maintainAspectRatio:false,cutout:'58%',onClick:(ev,els)=>{if(els.length){const k=e[els[0].index][0];if(k!='Lainnya'){f.q=k;$('q').value=k;render()}}},
+      plugins:{legend:{position:'bottom',labels:{boxWidth:12}},tooltip:{callbacks:{label:c=>{const t=e.reduce((s,x)=>s+x[1],0);return` ${rp0(c.parsed)} (${(c.parsed/t*100).toFixed(1)}%)`}}}}}})}
+
+// Event
+$('per').onclick=e=>{const p=e.target.dataset.p;if(!p)return;f.per=p;if(p!='custom'){f.fr=f.to='';$('fr').value=$('to').value=''}render()};
+['fr','to'].forEach(id=>$(id).onchange=()=>{f.fr=$('fr').value;f.to=$('to').value;f.per='custom';render()});
+$('ty').onchange=()=>{f.ty=$('ty').value;render()};
+$('q').oninput=()=>{f.q=$('q').value.trim();render()};
+$('rs').onclick=()=>{f={per:'all',fr:'',to:'',ty:'all',q:''};['fr','to','q'].forEach(i=>$(i).value='');$('ty').value='all';render()};
+$('rf').onclick=load;
+$('awal').oninput=()=>{store.set('awal',$('awal').value);render()};
+document.querySelector('thead').onclick=e=>{const k=e.target.dataset.k;if(!k)return;sort=sort.k==k?{k,dir:-sort.dir}:{k,dir:k=='a'||k=='d'?-1:1};render()};
+$('ex').onclick=()=>{const l=filtered(),c='Tanggal,Jenis,Keterangan,Jumlah\n'+l.map(r=>`${r.d},${TL[r.t]},"${r.n.replace(/"/g,'""')}",${r.a}`).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:'text/csv'}));a.download='transaksi.csv';a.click()};
+function theme(t){document.documentElement.dataset.theme=t;$('th').textContent=t=='dark'?'☀️':'🌙';store.set('theme',t);if(rows.length)render()}
+$('th').onclick=()=>theme(document.documentElement.dataset.theme=='dark'?'light':'dark');
+$('awal').value=store.get('awal')||'';
+theme(store.get('theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'));
+load();setInterval(load,5*6e4);
+</script>
+</body>
+</html>
