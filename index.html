@@ -41,6 +41,10 @@ h1{font-size:1.5rem;font-weight:800;margin:0;letter-spacing:-.02em}
 .charts h2,.tbl h2{font-size:1rem;margin:0 0 4px}
 .cv{position:relative;height:290px}
 .tbl .top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.tt{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tg{background:none;border:0;cursor:pointer;color:inherit;font:inherit;display:flex;align-items:center;gap:8px;padding:2px 0}
+.tg svg{transition:transform .2s}.tbl.closed .tg svg{transform:rotate(-90deg)}
+.tbl.closed .sc,.tbl.closed #ex{display:none}.tbl.closed .top{margin-bottom:0}
 .sc{max-height:420px;overflow:auto;border-radius:10px;border:1px solid var(--bd)}
 table{width:100%;border-collapse:collapse;font-size:.9rem}
 th,td{padding:10px 12px;text-align:left;white-space:nowrap}
@@ -76,6 +80,8 @@ tr:hover td{background:color-mix(in srgb,var(--ac) 7%,transparent)}
 .bk:hover,.bk.sel{border-color:var(--ac)}.bk.sel{box-shadow:0 0 0 2px color-mix(in srgb,var(--ac) 30%,transparent)}
 .bk .v{font-weight:800;font-size:1.15rem;font-variant-numeric:tabular-nums;margin:2px 0 6px}
 .bk input{width:100%;background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:4px 8px;font-size:.8rem}
+.eye{background:none;border:0;cursor:pointer;line-height:1;padding:2px 4px;margin-left:4px;opacity:.65;vertical-align:middle;color:inherit;font:inherit}
+.eye:hover,.eye:focus-visible{opacity:1}.eye svg{display:block}
 </style>
 </head>
 <body>
@@ -84,7 +90,7 @@ tr:hover td{background:color-mix(in srgb,var(--ac) 7%,transparent)}
   <div><h1>Pitih Kalua</h1><div class="sub">Catatan pemasukan dan pengeluaran · <span id="upd">memuat…</span></div></div>
   <div class="row"><span id="src" class="badge">…</span>
     <button class="btn" id="rf" title="Muat ulang data dari Google Sheets">Muat ulang</button>
-    <button class="btn" id="sc">📷 Scan struk</button><button class="btn" id="th" aria-label="Ganti tema">🌙</button><button class="btn" id="lo">Keluar</button></div>
+    <button class="btn" id="sc">📷 Scan struk</button><button class="btn" id="ey">Tampilkan semua</button><button class="btn" id="th" aria-label="Ganti tema">🌙</button><button class="btn" id="lo">Keluar</button></div>
 </header>
 
 <section class="panel filters" aria-label="Filter">
@@ -101,7 +107,7 @@ tr:hover td{background:color-mix(in srgb,var(--ac) 7%,transparent)}
 
 <section class="kpis">
   <div class="kpi main"><div class="l">Saldo saat ini</div><div class="v" id="k-saldo">–</div>
-    <small>Saldo awal gabungan<input id="awal" readonly aria-label="Saldo awal gabungan"></small>
+    <small>Saldo awal gabungan<input id="awal" readonly aria-label="Saldo awal gabungan"><span id="eawal"></span></small>
     <div><small>Sama dengan jumlah saldo semua rekening di bawah. Transfer hanya memindahkan saldo antar rekening.</small></div></div>
   <div class="kpi" style="--c:var(--in)"><div class="l">Total pemasukan</div><div class="v" id="k-in" style="color:var(--in)">–</div><small id="n-in"></small></div>
   <div class="kpi" style="--c:var(--out)"><div class="l">Total pengeluaran</div><div class="v" id="k-out" style="color:var(--out)">–</div><small id="n-out"></small></div>
@@ -112,14 +118,14 @@ tr:hover td{background:color-mix(in srgb,var(--ac) 7%,transparent)}
 <div class="sub" style="margin-bottom:10px">Klik kartu untuk memfilter transaksi rekening itu. Isi kolom saldo awal tiap rekening agar saldo akurat.</div><div class="bks" id="bk"></div></section>
 
 <section class="charts">
-  <div class="panel"><h2>Arus kas harian</h2><div class="sub">Klik batang untuk melihat transaksi hari itu</div><div class="cv"><canvas id="c1"></canvas></div></div>
-  <div class="panel"><h2>Rincian pengeluaran</h2><div class="sub">Klik irisan untuk mencari item tersebut</div><div class="cv"><canvas id="c2"></canvas></div></div>
+  <div class="panel"><h2>Arus kas harian <span class="ecs"></span></h2><div class="sub">Klik batang untuk melihat transaksi hari itu</div><div class="cv"><canvas id="c1"></canvas></div></div>
+  <div class="panel"><h2>Rincian pengeluaran <span class="ecs"></span></h2><div class="sub">Klik irisan untuk mencari item tersebut</div><div class="cv"><canvas id="c2"></canvas></div></div>
 </section>
 
 <section class="panel tbl">
-  <div class="top"><h2>Transaksi <span class="sub" id="cnt"></span></h2><button class="btn" id="ex">Unduh CSV</button></div>
-  <div class="sc"><table><thead><tr>
-    <th data-k="d">Tanggal ↕</th><th data-k="t">Jenis ↕</th><th data-k="ac">Rekening ↕</th><th data-k="n">Keterangan ↕</th><th data-k="a" class="r">Jumlah ↕</th></tr></thead>
+  <div class="top"><div class="tt"><button type="button" class="tg" id="tgt" aria-expanded="true" aria-controls="tsc" title="Buka/tutup tabel"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg><h2 style="margin:0">Transaksi</h2></button><span class="sub" id="cnt"></span></div><button class="btn" id="ex">Unduh CSV</button></div>
+  <div class="sc" id="tsc"><table><thead><tr>
+    <th data-k="d">Tanggal ↕</th><th data-k="t">Jenis ↕</th><th data-k="ac">Rekening ↕</th><th data-k="n">Keterangan ↕</th><th data-k="a" class="r" id="tha">Jumlah ↕</th></tr></thead>
     <tbody id="tb"></tbody></table><div id="em" class="empty" hidden>Tidak ada transaksi yang cocok. Ubah atau reset filter.</div></div>
 </section>
 </div>
@@ -208,15 +214,23 @@ const cnt=(l,t)=>l.filter(r=>r.t==t).length;
 const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 const fd=d=>new Date(d+'T00:00').toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
 
+// Sensor nominal (default tersembunyi, tidak disimpan; reset tiap muat ulang halaman)
+const MASK='Rp ***',SHOW=new Set();let ALL=false;
+const vis=k=>ALL||SHOW.has(k);
+const mk=(k,txt)=>vis(k)?txt:MASK;
+const EYE_ON='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_OFF='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a19.8 19.8 0 0 1 5.06-5.94M9.9 4.24A10.9 10.9 0 0 1 12 5c7 0 11 7 11 7a19.9 19.9 0 0 1-3.17 4.19M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+const eyeBtn=k=>`<button type="button" class="eye" data-eye="${k}" aria-pressed="${vis(k)}" aria-label="${vis(k)?'Sembunyikan':'Tampilkan'} nominal">${vis(k)?EYE_ON:EYE_OFF}</button>`;
+
 function render(){
-  const l=filtered(),B=balances(),awal=B.awal,all=sum(rows,'in')-sum(rows,'out')+awal;$('awal').value=rp0(awal);bankUI(B);
-  $('k-saldo').textContent=rp(all);$('k-in').textContent=rp0(sum(l,'in'));$('k-out').textContent=rp0(sum(l,'out'));$('k-tf').textContent=rp0(sum(l,'tf'));
+  const l=filtered(),B=balances(),awal=B.awal,all=sum(rows,'in')-sum(rows,'out')+awal;$('awal').value=mk('awal',rp0(awal));$('eawal').innerHTML=eyeBtn('awal');$('ey').textContent=ALL?'Sembunyikan semua':'Tampilkan semua';document.querySelectorAll('.ecs').forEach(el=>el.innerHTML=eyeBtn('cht'));$('tha').innerHTML='Jumlah ↕ '+eyeBtn('tbl');bankUI(B);
+  $('k-saldo').innerHTML=mk('saldo',rp(all))+eyeBtn('saldo');$('k-in').innerHTML=mk('in',rp0(sum(l,'in')))+eyeBtn('in');$('k-out').innerHTML=mk('out',rp0(sum(l,'out')))+eyeBtn('out');$('k-tf').innerHTML=mk('tf',rp0(sum(l,'tf')))+eyeBtn('tf');
   $('n-in').textContent=cnt(l,'in')+' transaksi';$('n-out').textContent=cnt(l,'out')+' transaksi';
-  const net=sum(l,'in')-sum(l,'out');$('n-net').textContent='Selisih periode ini: '+(net>=0?'+':'−')+rp0(Math.abs(net));
+  const net=sum(l,'in')-sum(l,'out');$('n-net').textContent='Selisih periode ini: '+(vis('in')&&vis('out')?(net>=0?'+':'−')+rp0(Math.abs(net)):MASK);
   $('per').innerHTML=PERS.map(([k,v])=>`<button class="btn${f.per==k?' on':''}" data-p="${k}">${v}</button>`).join('');
   $('cnt').textContent=`(${l.length} dari ${rows.length})`;
   const s=[...l].sort((x,y)=>{const a=x[sort.k],b=y[sort.k];return(a>b?1:a<b?-1:0)*sort.dir});
-  $('tb').innerHTML=s.map(r=>`<tr><td>${fd(r.d)}</td><td><span class="tag t-${r.t}">${TL[r.t]}</span></td><td>${r.ac||'–'}</td><td>${r.n.replace(/[<&]/g,c=>c=='<'?'&lt;':'&amp;')||'–'}${srcTag(r)}</td><td class="r" style="color:var(--${r.t})">${r.t=='in'?'+':r.t=='out'?'−':''}${rp(r.a)}</td></tr>`).join('');
+  $('tb').innerHTML=s.map(r=>`<tr><td>${fd(r.d)}</td><td><span class="tag t-${r.t}">${TL[r.t]}</span></td><td>${r.ac||'–'}</td><td>${r.n.replace(/[<&]/g,c=>c=='<'?'&lt;':'&amp;')||'–'}${srcTag(r)}</td><td class="r" style="color:var(--${r.t})">${r.t=='in'?'+':r.t=='out'?'−':''}${mk('tbl',rp(r.a))}</td></tr>`).join('');
   $('em').hidden=l.length>0;charts(l)}
 
 function charts(l){
@@ -231,15 +245,15 @@ function charts(l){
     {type:'bar',label:'Keluar',data:dout,backgroundColor:css('--out'),borderRadius:6}]},
     options:{maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
       onClick:(e,els)=>{const b=els.find(x=>x.datasetIndex>0);if(b){f.per='custom';f.fr=f.to=days[b.index];$('fr').value=$('to').value=f.fr;render()}},
-      plugins:{tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${rp0(c.parsed.y)}`}}},
-      scales:{x:{grid:{color:bd}},y:{grid:{color:bd},ticks:{callback:v=>v>=1e6?(v/1e6)+' jt':v}}}}});
+      plugins:{tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${mk('cht',rp0(c.parsed.y))}`}}},
+      scales:{x:{grid:{color:bd}},y:{grid:{color:bd},ticks:{callback:v=>!vis('cht')?'':v>=1e6?(v/1e6)+' jt':v}}}}});
   const g={};l.filter(r=>r.t=='out').forEach(r=>{const k=r.n||'Lainnya';g[k]=(g[k]||0)+r.a});
   let e=Object.entries(g).sort((a,b)=>b[1]-a[1]);if(e.length>6){const o=e.slice(6).reduce((s,x)=>s+x[1],0);e=e.slice(0,6).concat([['Lainnya',o]])}
   const pal=['#2f5bea','#d93a55','#c98a0b','#0c9366','#8b5cf6','#06b6d4','#94a3b8'];
   ch2&&ch2.destroy();
   ch2=new Chart($('c2'),{type:'doughnut',data:{labels:e.map(x=>x[0]),datasets:[{data:e.map(x=>x[1]),backgroundColor:pal,borderColor:css('--sf'),borderWidth:2}]},
     options:{maintainAspectRatio:false,cutout:'58%',onClick:(ev,els)=>{if(els.length){const k=e[els[0].index][0];if(k!='Lainnya'){f.q=k;$('q').value=k;render()}}},
-      plugins:{legend:{position:'bottom',labels:{boxWidth:12}},tooltip:{callbacks:{label:c=>{const t=e.reduce((s,x)=>s+x[1],0);return` ${rp0(c.parsed)} (${(c.parsed/t*100).toFixed(1)}%)`}}}}}})}
+      plugins:{legend:{position:'bottom',labels:{boxWidth:12}},tooltip:{callbacks:{label:c=>{const t=e.reduce((s,x)=>s+x[1],0);return vis('cht')?` ${rp0(c.parsed)} (${(c.parsed/t*100).toFixed(1)}%)`:` ${(c.parsed/t*100).toFixed(1)}%`}}}}}})}
 
 // Event
 $('per').onclick=e=>{const p=e.target.dataset.p;if(!p)return;f.per=p;if(p!='custom'){f.fr=f.to='';$('fr').value=$('to').value=''}render()};
@@ -248,6 +262,15 @@ $('ty').onchange=()=>{f.ty=$('ty').value;render()};
 $('q').oninput=()=>{f.q=$('q').value.trim();render()};
 $('rs').onclick=()=>{f={per:'all',fr:'',to:'',ty:'all',q:'',acc:''};['fr','to','q'].forEach(i=>$(i).value='');$('ty').value='all';render()};
 $('rf').onclick=load;
+// Collapse/expand tabel transaksi
+const tblEl=document.querySelector('.tbl');
+function setTbl(o){tblEl.classList.toggle('closed',!o);$('tgt').setAttribute('aria-expanded',o);store.set('tblopen',o?'1':'0')}
+$('tgt').onclick=()=>setTbl(tblEl.classList.contains('closed'));
+setTbl(store.get('tblopen')!=='0');
+
+document.addEventListener('click',e=>{const b=e.target.closest('[data-eye]');if(!b)return;const k=b.dataset.eye;
+  if(ALL){ALL=false;SHOW.clear()}else SHOW.has(k)?SHOW.delete(k):SHOW.add(k);render()});
+$('ey').onclick=()=>{ALL=!ALL;SHOW.clear();render()};
 
 document.querySelector('thead').onclick=e=>{const k=e.target.dataset.k;if(!k)return;sort=sort.k==k?{k,dir:-sort.dir}:{k,dir:k=='a'||k=='d'?-1:1};render()};
 $('ex').onclick=()=>{const l=filtered(),c='Tanggal,Jenis,Keterangan,Jumlah\n'+l.map(r=>`${r.d},${TL[r.t]},"${r.n.replace(/"/g,'""')}",${r.a}`).join('\n');
@@ -300,10 +323,10 @@ $('sx').onclick=()=>$('sm').hidden=true;$('b1').onclick=()=>$('f1').click();$('b
 $('f1').onchange=$('f2').onchange=e=>{onPic(e.target.files[0]);e.target.value=''};
 $('sv').onclick=async()=>{const t={d:$('sd').value,t:$('sj').value,a:parseFloat($('sa').value),n:$('sn').value.trim(),r:$('sr').value};
   if(!t.d||!(t.a>0)){$('ss').textContent='Tanggal dan jumlah wajib diisi.';return}
-  let ok=false;try{ok=(await post('/api/add',t)).ok}catch(e){}
+  let ok=false,st=0,em='';try{const r=await post('/api/add',t);ok=r.ok;st=r.status;if(!ok){const j=await r.json().catch(()=>({}));em=j.error||''}}catch(e){}
   $('sm').hidden=true;
   if(ok){toast('Tersimpan ke Google Sheets ✓');setTimeout(load,1500)}
-  else{const l=LT();const q={...t,s:'scan',...acct(t.t,t.r,t.r,'','')};l.push(q);store.set('lt',JSON.stringify(l));rows.push(q);render();toast('Tersimpan di perangkat ini (Google Form belum dikonfigurasi)')}};
+  else{const l=LT();const q={...t,s:'scan',...acct(t.t,t.r,t.r,'','')};l.push(q);store.set('lt',JSON.stringify(l));rows.push(q);render();toast('Tersimpan di perangkat ini ('+(st==501?'Google Form belum dikonfigurasi':'gagal kirim ke Google Form'+(em?': '+em:''))+')')}};
 // Rekening bank
 const BANKS=['BRI','BSI','Shopeepay','Seabank','Superbank-OVO-1277','Superbank-Utama-8378','Jago-Gopay Tab-3972','Jago-Utama-9784','Jago-Gopay Simp-2102','Jago-Stockbit RDN-1882','Dana','Allo Bank-7476','Bareksa','Tunai'];
 const UNT='_',ULBL='Belum ditandai rekening';
@@ -319,9 +342,9 @@ function balances(){const ab=AB(),m={},g=n=>m[n]||(m[n]={a:+ab[n]||0,s:0});BANKS
   return{m,awal:Object.values(m).reduce((s,x)=>s+x.a,0)}}
 const rk=n=>n==UNT?100:BANKS.includes(n)?BANKS.indexOf(n):50;
 function bankUI(B){const names=Object.keys(B.m).sort((a,b)=>rk(a)-rk(b)),nm=n=>n==UNT?ULBL:n;
-  $('bk').innerHTML=names.map(n=>{const x=B.m[n],v=Math.round((x.a+x.s)*100)/100;return `<div class="bk${f.acc==n?' sel':''}" data-n="${n}"><div class="sub">${nm(n)}</div><div class="v" style="color:${v<0?'var(--out)':'inherit'}">${rp(v)}</div><input type="number" step="any" data-a="${n}" value="${x.a||''}" placeholder="Saldo awal" aria-label="Saldo awal ${nm(n)}"></div>`}).join('');
+  $('bk').innerHTML=names.map(n=>{const x=B.m[n],v=Math.round((x.a+x.s)*100)/100;return `<div class="bk${f.acc==n?' sel':''}" data-n="${n}"><div class="sub">${nm(n)}</div><div class="v" style="color:${v<0?'var(--out)':'inherit'}">${mk('b:'+n,rp(v))}${eyeBtn('b:'+n)}</div><input type="${vis('b:'+n)?'number':'password'}" inputmode="decimal" autocomplete="off" step="any" data-a="${n}" value="${x.a||''}" placeholder="Saldo awal" aria-label="Saldo awal ${nm(n)}"></div>`}).join('');
   const o='<option value="">Semua rekening</option>'+names.map(n=>`<option value="${n}">${nm(n)}</option>`).join('');if($('ak').dataset.o!=o){$('ak').innerHTML=o;$('ak').dataset.o=o}$('ak').value=f.acc||''}
-$('bk').onclick=e=>{if(e.target.tagName=='INPUT')return;const c=e.target.closest('[data-n]');if(!c)return;f.acc=f.acc==c.dataset.n?'':c.dataset.n;render()};
+$('bk').onclick=e=>{if(e.target.tagName=='INPUT'||e.target.closest('[data-eye]'))return;const c=e.target.closest('[data-n]');if(!c)return;f.acc=f.acc==c.dataset.n?'':c.dataset.n;render()};
 $('bk').onchange=e=>{const n=e.target.dataset.a;if(n==null)return;const ab=AB();ab[n]=parseFloat(e.target.value)||0;store.set('awalb',JSON.stringify(ab));render()};
 $('ak').onchange=()=>{f.acc=$('ak').value;render()};
 $('sr').innerHTML+=BANKS.map(b=>`<option>${b}</option>`).join('');
