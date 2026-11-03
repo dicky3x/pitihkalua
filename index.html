@@ -56,15 +56,30 @@ tr:hover td{background:color-mix(in srgb,var(--ac) 7%,transparent)}
 @media(max-width:860px){.kpis{grid-template-columns:1fr 1fr}.kpi.main{grid-column:1/-1}.charts{grid-template-columns:1fr}}
 @media(max-width:460px){.kpis{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+[hidden]{display:none!important}
+.ov{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:var(--bg);overflow:auto}
+#sm.ov{background:rgba(10,16,32,.6)}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:18px;box-shadow:var(--sh);padding:22px;width:100%;max-width:360px;display:grid;gap:10px}
+.card label{font-size:.8rem;color:var(--mut)}
+.card input,.card select,.dr input{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:9px 10px;width:100%}
+.err{color:var(--out);font-size:.85rem;min-height:1.2em}
+#fab{position:fixed;right:16px;bottom:16px;z-index:30;border-radius:99px;padding:12px 18px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.dr{position:fixed;right:0;top:0;bottom:0;width:min(420px,100%);z-index:40;background:var(--sf);border-left:1px solid var(--bd);box-shadow:var(--sh);display:flex;flex-direction:column;gap:8px;padding:14px}
+.dh{display:flex;justify-content:space-between;align-items:center}
+#ms{flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.m{padding:9px 12px;border-radius:14px;max-width:88%;white-space:pre-wrap;font-size:.92rem}
+.m.u{align-self:flex-end;background:var(--ac);color:#fff}.m.a{background:var(--sf2)}
+#sp{max-height:180px;max-width:100%;object-fit:contain;border-radius:10px;justify-self:center}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;max-width:90%}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap" id="app" hidden>
 <header>
   <div><h1>Pitih Kalua</h1><div class="sub">Catatan pemasukan dan pengeluaran · <span id="upd">memuat…</span></div></div>
   <div class="row"><span id="src" class="badge">…</span>
     <button class="btn" id="rf" title="Muat ulang data dari Google Sheets">Muat ulang</button>
-    <button class="btn" id="th" aria-label="Ganti tema">🌙</button></div>
+    <button class="btn" id="sc">📷 Scan struk</button><button class="btn" id="th" aria-label="Ganti tema">🌙</button><button class="btn" id="lo">Keluar</button></div>
 </header>
 
 <section class="panel filters" aria-label="Filter">
@@ -100,6 +115,24 @@ tr:hover td{background:color-mix(in srgb,var(--ac) 7%,transparent)}
 </section>
 </div>
 
+<div id="lg" class="ov" hidden><form id="lf" class="card"><h1>Pitih Kalua</h1><p class="sub" style="margin:0">Masuk untuk melihat catatan keuangan</p>
+<label for="lu">Username</label><input id="lu" autocomplete="username" required>
+<label for="lp">Password</label><input id="lp" type="password" autocomplete="current-password" required>
+<div id="le" class="err" role="alert"></div><button class="btn on">Masuk</button></form></div>
+<button id="fab" class="btn on" hidden>💬 Tanya AI</button>
+<aside id="ch" class="dr" hidden><div class="dh"><b>Tanya AI keuangan</b><button class="btn" id="cx" aria-label="Tutup">✕</button></div>
+<div id="ms"></div><div class="row" id="sg"></div>
+<div class="row" style="flex-wrap:nowrap"><input id="ci" placeholder="Tanya sesuatu…"><button class="btn on" id="cs">Kirim</button></div></aside>
+<div id="sm" class="ov" hidden><div class="card" style="max-width:440px"><div class="dh"><b>Catat dari gambar</b><button class="btn" id="sx" aria-label="Tutup">✕</button></div>
+<div class="row"><button class="btn on" id="b1">📷 Foto struk</button><button class="btn" id="b2">🖼️ Pilih gambar</button></div>
+<img id="sp" alt="Pratinjau" hidden><p id="ss" class="sub" style="margin:0"></p>
+<div id="sf" hidden style="display:grid;gap:8px"><div><label for="sd">Tanggal</label><input type="date" id="sd"></div>
+<div><label for="sj">Jenis</label><select id="sj"><option value="out">Uang keluar</option><option value="in">Uang masuk</option></select></div>
+<div><label for="sa">Jumlah (Rp)</label><input type="number" id="sa" min="0" step="any"></div>
+<div><label for="sn">Keterangan</label><input id="sn" maxlength="80"></div>
+<button class="btn on" id="sv">Simpan sebagai transaksi</button></div></div></div>
+<input type="file" id="f1" accept="image/*" capture="environment" hidden><input type="file" id="f2" accept="image/*" hidden>
+<div id="tt" class="toast" hidden></div>
 <script>
 const SHEET_ID='12j1vVjdi-fmQv-8dDx1G9VXxgaBNcLHhK1xn6O_dVUQ',TAB='Form Responses 1';
 const URL_JSON=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&headers=1&sheet=${encodeURIComponent(TAB)}`;
@@ -144,7 +177,11 @@ async function load(){
   $('upd').textContent='memuat…';
   try{let data;try{const r1=await fetch(URL_JSON,{cache:'no-store'});if(!r1.ok)throw 0;data=fromJSON(await r1.text())}catch(e){const r2=await fetch(URL_CSV,{cache:'no-store'});if(!r2.ok)throw 0;data=fromCSV(await r2.text())}if(!data.length)throw 0;rows=data;live=true}
   catch(e){rows=SNAP.map(([d,t,a,n])=>({d,t,a,n}));live=false}
-  $('src').textContent=(live?'● Live dari Google Sheets':'Data contoh (snapshot)')+(skipped.length?` · ${skipped.length} baris dilewati`:'');$('src').title=skipped.join('\n');if(skipped.length)console.warn('Baris dilewati:',skipped);$('src').className='badge'+(live?' live':'');
+  await loadBBM();const n0=rows.length;rows=rows.filter(r=>!(r.d>=BBM_FROM&&BBM_RE.test(r.n)));ign=n0-rows.length;
+  rows.forEach(r=>{r.s=r.s||'form'});
+  bbmRaw.filter(x=>x.d>=BBM_FROM).forEach(x=>rows.push({d:x.d,t:'out',a:x.a,n:`BBM ${x.j} – ${x.k}`,s:'bbm'}));
+  rows.push(...LT());
+  $('src').textContent=(live?'● Live dari Google Sheets':'Data contoh (snapshot)')+(skipped.length?` · ${skipped.length} baris dilewati`:'');$('src').title=skipped.join('\n');if(skipped.length)console.warn('Baris dilewati:',skipped);$('src').textContent+=(bbmOk?' · BBM ✓':' · BBM gagal dimuat')+(ign?` · ${ign} catatan BBM di sheet utama diabaikan`:'');$('src').className='badge'+(live?' live':'');
   $('upd').textContent='diperbarui '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
   render()}
 
@@ -169,7 +206,7 @@ function render(){
   $('per').innerHTML=PERS.map(([k,v])=>`<button class="btn${f.per==k?' on':''}" data-p="${k}">${v}</button>`).join('');
   $('cnt').textContent=`(${l.length} dari ${rows.length})`;
   const s=[...l].sort((x,y)=>{const a=x[sort.k],b=y[sort.k];return(a>b?1:a<b?-1:0)*sort.dir});
-  $('tb').innerHTML=s.map(r=>`<tr><td>${fd(r.d)}</td><td><span class="tag t-${r.t}">${TL[r.t]}</span></td><td>${r.n.replace(/[<&]/g,c=>c=='<'?'&lt;':'&amp;')||'–'}</td><td class="r" style="color:var(--${r.t})">${r.t=='in'?'+':r.t=='out'?'−':''}${rp(r.a)}</td></tr>`).join('');
+  $('tb').innerHTML=s.map(r=>`<tr><td>${fd(r.d)}</td><td><span class="tag t-${r.t}">${TL[r.t]}</span></td><td>${r.n.replace(/[<&]/g,c=>c=='<'?'&lt;':'&amp;')||'–'}${srcTag(r)}</td><td class="r" style="color:var(--${r.t})">${r.t=='in'?'+':r.t=='out'?'−':''}${rp(r.a)}</td></tr>`).join('');
   $('em').hidden=l.length>0;charts(l)}
 
 function charts(l){
@@ -209,7 +246,55 @@ function theme(t){document.documentElement.dataset.theme=t;$('th').textContent=t
 $('th').onclick=()=>theme(document.documentElement.dataset.theme=='dark'?'light':'dark');
 $('awal').value=store.get('awal')||'';
 theme(store.get('theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'));
-load();setInterval(load,5*6e4);
+
+const BBM_ID='1AJJPWNsTRBUXMYbz-XOYcCs0025zG2t_dyqxUpNDFTc',BBM_TAB='Form Responses 1',BBM_FROM='2026-11-01',BBM_RE=/bbm|bensin|pertalite|pertamax|solar|dexlite|turbo/i;
+let bbmRaw=[],bbmOk=false,ign=0,tm=null,chat=[];
+const LT=()=>{try{return JSON.parse(store.get('lt')||'[]')}catch(e){return[]}};
+const srcTag=r=>r.s=='bbm'?' <span class="tag t-tf">⛽ sheet BBM</span>':r.s=='scan'?' <span class="tag t-in">📷 scan (lokal)</span>':'';
+async function loadBBM(){try{const r=await fetch(`https://docs.google.com/spreadsheets/d/${BBM_ID}/gviz/tq?tqx=out:json&headers=1&sheet=${encodeURIComponent(BBM_TAB)}`,{cache:'no-store'});if(!r.ok)throw 0;const t=await r.text();
+  bbmRaw=JSON.parse(t.slice(t.indexOf('{'),t.lastIndexOf('}')+1)).table.rows.map(r=>{const c=r.c.map(x=>x?(x.v!=null?x.v:(x.f!=null?x.f:'')):'');
+    return{d:gd(c[1]),k:c[2],j:c[3],a:typeof c[5]=='number'?c[5]:num(c[5]),km:c[6]}}).filter(x=>x.d&&x.a>0);bbmOk=true}catch(e){bbmRaw=[];bbmOk=false}}
+const post=(u,b)=>fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});
+function toast(m){const t=$('tt');t.textContent=m;t.hidden=false;clearTimeout(t._t);t._t=setTimeout(()=>t.hidden=true,4000)}
+
+// Login
+async function boot(){let ok=false;try{ok=(await fetch('/api/login')).ok}catch(e){}ok?enter():$('lg').hidden=false}
+function enter(){$('lg').hidden=true;$('app').hidden=false;$('fab').hidden=false;load();if(!tm)tm=setInterval(load,3e5)}
+$('lf').onsubmit=async e=>{e.preventDefault();$('le').textContent='';const r=await post('/api/login',{u:$('lu').value.trim(),p:$('lp').value}).catch(()=>null);
+  if(r&&r.ok){$('lp').value='';enter()}else $('le').textContent=r&&r.status==401?'Username atau password salah.':'Tidak bisa terhubung ke server.'};
+$('lo').onclick=async()=>{await fetch('/api/login',{method:'DELETE'});location.reload()};
+
+// Tanya AI
+function ctx(){const m={};rows.forEach(r=>{const k=r.d.slice(0,7);m[k]=m[k]||{in:0,out:0,tf:0};m[k][r.t]+=r.a});const aw=parseFloat($('awal').value)||0;
+  return `Hari ini: ${iso(new Date())}. Saldo saat ini: ${Math.round((sum(rows,'in')-sum(rows,'out')+aw)*100)/100} (saldo awal ${aw}). Pengeluaran BBM mulai 2026-11 diambil dari sheet BBM.\nRingkasan per bulan (masuk/keluar/transfer): `+Object.entries(m).map(([k,v])=>`${k}: ${v.in}/${v.out}/${v.tf}`).join('; ')
+  +`\nTransaksi terbaru (tanggal|jenis|jumlah|keterangan|sumber):\n`+[...rows].sort((a,b)=>a.d<b.d?1:-1).slice(0,150).map(r=>`${r.d}|${r.t}|${r.a}|${r.n}|${r.s}`).join('\n')
+  +`\nRiwayat pengisian BBM terakhir (tanggal|kendaraan|jenis|jumlah|km):\n`+bbmRaw.slice(-15).map(x=>`${x.d}|${x.k}|${x.j}|${x.a}|${x.km}`).join('\n')}
+function add(w,t){const d=document.createElement('div');d.className='m '+w;d.textContent=t;$('ms').append(d);$('ms').scrollTop=1e9;return d}
+async function ask(t){if(!t)return;add('u',t);chat.push({role:'user',content:t});const b=add('a','…');
+  try{const r=await post('/api/chat',{messages:chat,context:ctx()});if(r.status==401)return location.reload();const j=await r.json();if(!r.ok)throw new Error(j.error||r.status);b.textContent=j.reply;chat.push({role:'assistant',content:j.reply})}
+  catch(e){b.textContent='Maaf, gagal: '+e.message;chat.pop()}}
+add('a','Halo! Tanya apa saja soal catatan keuanganmu, misalnya pengeluaran terbesar atau total BBM.');
+$('sg').innerHTML=['Ringkas keuangan bulan ini','Pengeluaran terbesar apa?','Berapa total BBM sejak November?'].map(x=>`<button class="btn">${x}</button>`).join('');
+$('sg').onclick=e=>{if(e.target.tagName=='BUTTON')ask(e.target.textContent)};
+$('fab').onclick=()=>{$('ch').hidden=false;$('ci').focus()};$('cx').onclick=()=>$('ch').hidden=true;
+$('cs').onclick=()=>{const v=$('ci').value.trim();$('ci').value='';ask(v)};$('ci').onkeydown=e=>{if(e.key=='Enter')$('cs').click()};
+
+// Scan struk / screenshot
+async function shrink(f){const im=await createImageBitmap(f),k=Math.min(1,1400/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.8)}
+async function onPic(f){if(!f)return;$('sf').hidden=true;$('ss').textContent='AI sedang membaca gambar…';
+  try{const data=await shrink(f);$('sp').src=data;$('sp').hidden=false;const r=await post('/api/scan',{image:data});if(r.status==401)return location.reload();const j=await r.json();if(!r.ok)throw new Error(j.error||r.status);
+    $('sd').value=j.tanggal||iso(new Date());$('sj').value=j.jenis;$('sa').value=j.jumlah||'';$('sn').value=j.keterangan||'';$('sf').hidden=false;$('ss').textContent='Periksa hasil bacaan AI, perbaiki jika perlu, lalu simpan.'}
+  catch(e){$('ss').textContent='Gagal membaca gambar: '+e.message}}
+$('sc').onclick=()=>{$('sm').hidden=false;$('sf').hidden=true;$('sp').hidden=true;$('ss').textContent='Foto struk atau pilih screenshot transaksi.'};
+$('sx').onclick=()=>$('sm').hidden=true;$('b1').onclick=()=>$('f1').click();$('b2').onclick=()=>$('f2').click();
+$('f1').onchange=$('f2').onchange=e=>{onPic(e.target.files[0]);e.target.value=''};
+$('sv').onclick=async()=>{const t={d:$('sd').value,t:$('sj').value,a:parseFloat($('sa').value),n:$('sn').value.trim()};
+  if(!t.d||!(t.a>0)){$('ss').textContent='Tanggal dan jumlah wajib diisi.';return}
+  let ok=false;try{ok=(await post('/api/add',t)).ok}catch(e){}
+  $('sm').hidden=true;
+  if(ok){toast('Tersimpan ke Google Sheets ✓');setTimeout(load,1500)}
+  else{const l=LT();l.push({...t,s:'scan'});store.set('lt',JSON.stringify(l));rows.push({...t,s:'scan'});render();toast('Tersimpan di perangkat ini (Google Form belum dikonfigurasi)')}};
+boot();
 </script>
 </body>
 </html>
