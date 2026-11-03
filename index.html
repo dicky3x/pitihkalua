@@ -189,7 +189,7 @@ async function load(){
   catch(e){rows=SNAP.map(([d,t,a,n])=>({d,t,a,n}));live=false}
   await loadBBM();const n0=rows.length;rows=rows.filter(r=>!(r.d>=BBM_FROM&&BBM_RE.test(r.n)));ign=n0-rows.length;
   rows.forEach(r=>{r.s=r.s||'form'});
-  bbmRaw.filter(x=>x.d>=BBM_FROM).forEach(x=>rows.push({d:x.d,t:'out',a:x.a,n:`BBM ${x.j} – ${x.k}`,s:'bbm'}));
+  bbmRaw.filter(x=>x.d>=BBM_FROM).forEach(x=>rows.push({d:x.d,t:'out',a:x.a,n:`BBM ${x.j} – ${x.k}`,s:'bbm',f:'Tunai',to:'',ac:'Tunai →'}));
   rows.push(...LT());
   $('src').textContent=(live?'● Live dari Google Sheets':'Data contoh (snapshot)')+(skipped.length?` · ${skipped.length} baris dilewati`:'');$('src').title=skipped.join('\n');if(skipped.length)console.warn('Baris dilewati:',skipped);$('src').textContent+=(bbmOk?' · BBM ✓':' · BBM gagal dimuat')+(ign?` · ${ign} catatan BBM di sheet utama diabaikan`:'');$('src').className='badge'+(live?' live':'');
   $('upd').textContent='diperbarui '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
@@ -276,7 +276,7 @@ $('lo').onclick=async()=>{await fetch('/api/login',{method:'DELETE'});location.r
 
 // Tanya AI
 function ctx(){const m={};rows.forEach(r=>{const k=r.d.slice(0,7);m[k]=m[k]||{in:0,out:0,tf:0};m[k][r.t]+=r.a});const bl=balances(),aw=bl.awal,sp=Object.entries(bl.m).map(([k,v])=>`${k==UNT?ULBL:k}: ${Math.round((v.a+v.s)*100)/100}`).join('; ');
-  return `Hari ini: ${iso(new Date())}. Saldo saat ini: ${Math.round((sum(rows,'in')-sum(rows,'out')+aw)*100)/100} (saldo awal ${aw}). Pengeluaran BBM mulai 2026-11 diambil dari sheet BBM. Saldo per rekening (transfer antar rekening sudah dihitung): ${sp}.\nRingkasan per bulan (masuk/keluar/transfer): `+Object.entries(m).map(([k,v])=>`${k}: ${v.in}/${v.out}/${v.tf}`).join('; ')
+  return `Hari ini: ${iso(new Date())}. Saldo saat ini: ${Math.round((sum(rows,'in')-sum(rows,'out')+aw)*100)/100} (saldo awal ${aw}). Pengeluaran BBM mulai 2026-11 diambil dari sheet BBM dan dibayar tunai (rekening Tunai); tarik tunai dicatat sebagai transfer dari bank ke Tunai. Saldo per rekening (transfer antar rekening sudah dihitung): ${sp}.\nRingkasan per bulan (masuk/keluar/transfer): `+Object.entries(m).map(([k,v])=>`${k}: ${v.in}/${v.out}/${v.tf}`).join('; ')
   +`\nTransaksi terbaru (tanggal|jenis|jumlah|keterangan|sumber|rekening):\n`+[...rows].sort((a,b)=>a.d<b.d?1:-1).slice(0,150).map(r=>`${r.d}|${r.t}|${r.a}|${r.n}|${r.s}|${r.ac||''}`).join('\n')
   +`\nRiwayat pengisian BBM terakhir (tanggal|kendaraan|jenis|jumlah|km):\n`+bbmRaw.slice(-15).map(x=>`${x.d}|${x.k}|${x.j}|${x.a}|${x.km}`).join('\n')}
 function add(w,t){const d=document.createElement('div');d.className='m '+w;d.textContent=t;$('ms').append(d);$('ms').scrollTop=1e9;return d}
@@ -305,9 +305,9 @@ $('sv').onclick=async()=>{const t={d:$('sd').value,t:$('sj').value,a:parseFloat(
   if(ok){toast('Tersimpan ke Google Sheets ✓');setTimeout(load,1500)}
   else{const l=LT();const q={...t,s:'scan',...acct(t.t,t.r,t.r,'','')};l.push(q);store.set('lt',JSON.stringify(l));rows.push(q);render();toast('Tersimpan di perangkat ini (Google Form belum dikonfigurasi)')}};
 // Rekening bank
-const BANKS=['BRI','BSI','Shopeepay','Seabank','Superbank-OVO-1277','Superbank-Utama-8378','Jago-Gopay Tab-3972','Jago-Utama-9784','Jago-Gopay Simp-2102','Jago-Stockbit RDN-1882','Dana','Allo Bank-7476','Bareksa'];
+const BANKS=['BRI','BSI','Shopeepay','Seabank','Superbank-OVO-1277','Superbank-Utama-8378','Jago-Gopay Tab-3972','Jago-Utama-9784','Jago-Gopay Simp-2102','Jago-Stockbit RDN-1882','Dana','Allo Bank-7476','Bareksa','Tunai'];
 const UNT='_',ULBL='Belum ditandai rekening';
-const nb=v=>{v=String(v==null?'':v).trim();return v&&(BANKS.find(b=>b.toLowerCase()==v.toLowerCase())||v)};
+const nb=v=>{v=String(v==null?'':v).trim();if(/^(cash|kas)$/i.test(v))v='Tunai';return v&&(BANKS.find(b=>b.toLowerCase()==v.toLowerCase())||v)};
 function acct(t,p,n,tp,tn){p=nb(p);n=nb(n);tp=nb(tp);tn=nb(tn);
   if(t=='in')return{f:'',to:n,ac:n?'→ '+n:''};
   if(t=='out')return{f:p,to:'',ac:p?p+' →':''};
