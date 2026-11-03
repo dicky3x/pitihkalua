@@ -14,6 +14,9 @@ module.exports = async (req, res) => {
   f.set('entry.' + E.GFORM_E_CAT, t === 'in' ? 'Uang Masuk' : 'Uang Keluar');
   f.set('entry.' + E.GFORM_E_AMT, String(a));
   f.set('entry.' + E.GFORM_E_NOTE, String(n || '').slice(0, 200));
+  const rek = String((req.body || {}).r || '').slice(0, 60);
+  if (rek && t === 'in' && E.GFORM_E_TO) f.set('entry.' + E.GFORM_E_TO, rek);
+  if (rek && t !== 'in' && E.GFORM_E_FROM) f.set('entry.' + E.GFORM_E_FROM, rek);
   try {
     const r = await fetch(`https://docs.google.com/forms/d/e/${E.GFORM_ID}/formResponse`, {
       method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: f, redirect: 'manual'
