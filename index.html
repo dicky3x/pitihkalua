@@ -35,6 +35,8 @@ h1{font-size:1.5rem;font-weight:800;margin:0;letter-spacing:-.02em}
 .kpi .v{font-size:1.5rem;font-weight:800;letter-spacing:-.02em;margin:4px 0;font-variant-numeric:tabular-nums}
 .kpi.main{--c:var(--ac);background:linear-gradient(135deg,color-mix(in srgb,var(--ac) 14%,var(--sf)),var(--sf))}
 .kpi.main .v{font-size:2.1rem}
+.kpi.main{cursor:pointer}.kpi.main .chev{display:inline-block;vertical-align:middle;margin-left:4px}.kpi.main .chev svg{transition:transform .2s;transform:rotate(-90deg)}.kpi.main.open .chev svg{transform:none}
+.kpi.main:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 .kpi small{color:var(--mut)}
 .kpi input{width:150px;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:4px 8px;margin-left:6px}
 .charts{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:16px}
@@ -44,7 +46,8 @@ h1{font-size:1.5rem;font-weight:800;margin:0;letter-spacing:-.02em}
 .tt{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .tg{background:none;border:0;cursor:pointer;color:inherit;font:inherit;display:flex;align-items:center;gap:8px;padding:2px 0}
 .tg svg{transition:transform .2s}.tbl.closed .tg svg{transform:rotate(-90deg)}
-.tbl.closed .sc,.tbl.closed #ex,.tbl.closed .pager{display:none}.tbl.closed .top{margin-bottom:0}
+.tbl.closed .sc,.tbl.closed #ex,.tbl.closed .pager{display:none}
+.fil.closed .tg svg{transform:rotate(-90deg)}.fil.closed #fbody{display:none}.fh{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.fil.closed .fh{margin:0}.tbl.closed .top{margin-bottom:0}
 .pager{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
 .pager .pgs{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--mut)}
 .pager select{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:5px 8px}
@@ -63,6 +66,7 @@ tr:hover td{background:color-mix(in srgb,var(--ac) 7%,transparent)}
 .empty{padding:32px;text-align:center;color:var(--mut)}
 @media(max-width:860px){.kpis{grid-template-columns:1fr 1fr}.kpi.main{grid-column:1/-1}.charts{grid-template-columns:1fr}}
 @media(max-width:460px){.kpis{grid-template-columns:1fr}}
+.kpis.k3{grid-template-columns:repeat(3,1fr)}@media(max-width:600px){.kpis.k3{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 [hidden]{display:none!important}
 .ov{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:var(--bg);overflow:auto}
@@ -97,7 +101,9 @@ tr:hover td{background:color-mix(in srgb,var(--ac) 7%,transparent)}
     <button class="btn" id="mn">✍️ Input manual</button><button class="btn" id="sc">📷 Scan struk</button><button class="btn" id="ey">Tampilkan semua</button><button class="btn" id="th" aria-label="Ganti tema">🌙</button><button class="btn" id="lo">Keluar</button></div>
 </header>
 
-<section class="panel filters" aria-label="Filter">
+<section class="panel filters fil" aria-label="Filter">
+  <div class="top fh"><button type="button" class="tg" id="tgf" aria-expanded="true" aria-controls="fbody" title="Buka/tutup filter"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg><b>Filter</b></button><span class="sub" id="fsum"></span></div>
+  <div id="fbody" style="display:grid;gap:12px">
   <div class="row" id="per"></div>
   <div class="row">
     <div><label for="fr">Dari</label><input type="date" id="fr"></div>
@@ -107,15 +113,22 @@ tr:hover td{background:color-mix(in srgb,var(--ac) 7%,transparent)}
     <div style="flex:1"><label for="q">Cari keterangan</label><input id="q" type="search" placeholder="mis. cicilan, token, gaji"></div>
     <button class="btn" id="rs" style="align-self:end">Reset filter</button>
   </div>
+  </div>
 </section>
 
 <section class="kpis">
-  <div class="kpi main"><div class="l">Saldo saat ini</div><div class="v" id="k-saldo">–</div>
+  <div class="kpi main" id="kmain" role="button" tabindex="0" aria-expanded="false" aria-controls="ks" title="Klik untuk melihat rincian bank, tunai, dan portofolio"><div class="l">Saldo saat ini <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></span></div><div class="v" id="k-saldo">–</div>
     <small>Saldo awal gabungan<input id="awal" readonly aria-label="Saldo awal gabungan"><span id="eawal"></span></small>
     <div><small>Sama dengan jumlah saldo semua rekening di bawah. Transfer hanya memindahkan saldo antar rekening.</small></div></div>
   <div class="kpi" style="--c:var(--in)"><div class="l">Total pemasukan</div><div class="v" id="k-in" style="color:var(--in)">–</div><small id="n-in"></small></div>
   <div class="kpi" style="--c:var(--out)"><div class="l">Total pengeluaran</div><div class="v" id="k-out" style="color:var(--out)">–</div><small id="n-out"></small></div>
   <div class="kpi" style="--c:var(--tf)"><div class="l">Transfer antar rekening</div><div class="v" id="k-tf" style="color:var(--tf)">–</div><small id="n-net"></small></div>
+</section>
+
+<section class="kpis k3" id="ks" hidden aria-label="Rincian saldo">
+  <div class="kpi" style="--c:var(--ac)"><div class="l">Saldo bank</div><div class="v" id="k-sb">–</div><small>Semua bank dan e-wallet</small></div>
+  <div class="kpi" style="--c:var(--ac)"><div class="l">Saldo tunai</div><div class="v" id="k-st">–</div><small>Rekening Tunai</small></div>
+  <div class="kpi" style="--c:var(--ac)"><div class="l">Saldo portofolio</div><div class="v" id="k-sp">–</div><small>Bareksa + Jago-Stockbit RDN-1882 + Saham Stockbit</small></div>
 </section>
 
 <section class="panel" style="margin-bottom:16px"><h2 style="font-size:1rem;margin:0 0 2px">Saldo per rekening</h2>
@@ -168,6 +181,7 @@ const rp0=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maxi
 const TL={in:'Uang masuk',out:'Uang keluar',tf:'Transfer'};
 const PERS=[['all','Semua'],['today','Hari ini'],['7','7 hari'],['month','Bulan ini'],['custom','Kustom']];
 const store={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+let ksOpen=false;
 let pg={n:(()=>{const v=localStorage.getItem('pgn');return ['10','25','50','100','all'].includes(v)?v:'10'})(),p:1},psig='';
 let rows=[],f={per:'all',fr:'',to:'',ty:'all',q:'',acc:''},sort={k:'d',dir:-1},ch1,ch2,live=false;
 
@@ -233,6 +247,11 @@ const eyeBtn=k=>`<button type="button" class="eye" data-eye="${k}" aria-pressed=
 function render(){
   const l=filtered(),B=balances(),awal=B.awal,all=sum(rows,'in')-sum(rows,'out')+awal;$('awal').value=mk('awal',rp0(awal));$('eawal').innerHTML=eyeBtn('awal');$('ey').textContent=ALL?'Sembunyikan semua':'Tampilkan semua';document.querySelectorAll('.ecs').forEach(el=>el.innerHTML=eyeBtn('cht'));$('tha').innerHTML='Jumlah ↕ '+eyeBtn('tbl');bankUI(B);
   $('k-saldo').innerHTML=mk('saldo',rp(all))+eyeBtn('saldo');$('k-in').innerHTML=mk('in',rp0(sum(l,'in')))+eyeBtn('in');$('k-out').innerHTML=mk('out',rp0(sum(l,'out')))+eyeBtn('out');$('k-tf').innerHTML=mk('tf',rp0(sum(l,'tf')))+eyeBtn('tf');
+  const bv=n=>B.m[n]?B.m[n].a+B.m[n].s:0,tot=Object.values(B.m).reduce((x,y)=>x+y.a+y.s,0),pf=['Bareksa','Jago-Stockbit RDN-1882','Saham Stockbit'].reduce((x,n)=>x+bv(n),0),tn=bv('Tunai'),bk=tot-tn-pf,r2=x=>Math.round(x*100)/100;
+  $('k-sb').innerHTML=mk('sb',rp(r2(bk)))+eyeBtn('sb');$('k-st').innerHTML=mk('st',rp(r2(tn)))+eyeBtn('st');$('k-sp').innerHTML=mk('sp',rp(r2(pf)))+eyeBtn('sp');
+  $('ks').hidden=!ksOpen;$('kmain').classList.toggle('open',ksOpen);$('kmain').setAttribute('aria-expanded',ksOpen);
+  const fs=[];if(f.per!='all')fs.push(f.per=='custom'?`${f.fr||'…'} s/d ${f.to||'…'}`:(PERS.find(x=>x[0]==f.per)||[])[1]);if(f.ty!='all')fs.push(TL[f.ty]);if(f.acc)fs.push(f.acc==UNT?ULBL:f.acc);if(f.q)fs.push('“'+f.q+'”');
+  $('fsum').textContent=fs.length?'Aktif: '+fs.join(' · '):'Tidak ada filter aktif';
   $('n-in').textContent=cnt(l,'in')+' transaksi';$('n-out').textContent=cnt(l,'out')+' transaksi';
   const net=sum(l,'in')-sum(l,'out');$('n-net').textContent='Selisih periode ini: '+(vis('in')&&vis('out')?(net>=0?'+':'−')+rp0(Math.abs(net)):MASK);
   $('per').innerHTML=PERS.map(([k,v])=>`<button class="btn${f.per==k?' on':''}" data-p="${k}">${v}</button>`).join('');
@@ -276,6 +295,15 @@ $('ty').onchange=()=>{f.ty=$('ty').value;render()};
 $('q').oninput=()=>{f.q=$('q').value.trim();render()};
 $('rs').onclick=()=>{f={per:'all',fr:'',to:'',ty:'all',q:'',acc:''};['fr','to','q'].forEach(i=>$(i).value='');$('ty').value='all';render()};
 $('rf').onclick=load;
+// Collapse/expand filter
+const filEl=document.querySelector('.fil');
+function setFil(o){filEl.classList.toggle('closed',!o);$('tgf').setAttribute('aria-expanded',o);store.set('fopen',o?'1':'0')}
+$('tgf').onclick=()=>setFil(filEl.classList.contains('closed'));
+setFil(store.get('fopen')!=='0');
+// Klik KPI saldo -> rincian
+const togKs=()=>{ksOpen=!ksOpen;render()};
+$('kmain').onclick=e=>{if(e.target.closest('[data-eye]')||e.target.tagName=='INPUT')return;togKs()};
+$('kmain').onkeydown=e=>{if(e.target!==$('kmain'))return;if(e.key=='Enter'||e.key==' '){e.preventDefault();togKs()}};
 $('pgn').onchange=()=>{pg.n=$('pgn').value;pg.p=1;store.set('pgn',pg.n);render()};
 $('pg1').onclick=()=>{pg.p=1;render()};$('pgp').onclick=()=>{pg.p--;render()};$('pgx').onclick=()=>{pg.p++;render()};$('pgz').onclick=()=>{pg.p=1e9;render()};
 // Collapse/expand tabel transaksi
@@ -362,7 +390,7 @@ $('sv').onclick=async()=>{const t={d:$('sd').value,t:$('sj').value,a:parseFloat(
   if(ok){toast(wn.length?'Tersimpan, tapi: '+wn.join('; '):'Tersimpan ke Google Sheets ✓');setTimeout(load,1500)}
   else{const l=LT();const q={d:t.d,t:t.t,a:t.a,n:t.n,s:src,...acct(t.t,t.from||'',t.to||'',t.from||'',t.to||'')};l.push(q);store.set('lt',JSON.stringify(l));rows.push(q);render();toast('Tersimpan di perangkat ini ('+(st==501?'Google Form belum dikonfigurasi':'gagal kirim ke Google Form'+(em?': '+em:''))+')')}};
 // Rekening bank
-const BANKS=['BRI','BSI','Shopeepay','Seabank','Superbank-OVO-1277','Superbank-Utama-8378','Jago-Gopay Tab-3972','Jago-Utama-9784','Jago-Gopay Simp-2102','Jago-Stockbit RDN-1882','Dana','Allo Bank-7476','Bareksa','Tunai'];
+const BANKS=['BRI','BSI','Shopeepay','Seabank','Superbank-OVO-1277','Superbank-Utama-8378','Jago-Gopay Tab-3972','Jago-Utama-9784','Jago-Gopay Simp-2102','Jago-Stockbit RDN-1882','Saham Stockbit','Dana','Allo Bank-7476','Bareksa','Tunai'];
 const UNT='_',ULBL='Belum ditandai rekening';
 const nb=v=>{v=String(v==null?'':v).trim();if(/^(cash|kas)$/i.test(v))v='Tunai';return v&&(BANKS.find(b=>b.toLowerCase()==v.toLowerCase())||v)};
 function acct(t,p,n,tp,tn){p=nb(p);n=nb(n);tp=nb(tp);tn=nb(tn);
