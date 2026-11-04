@@ -47,7 +47,7 @@ h1{font-size:1.5rem;font-weight:800;margin:0;letter-spacing:-.02em}
 .tg{background:none;border:0;cursor:pointer;color:inherit;font:inherit;display:flex;align-items:center;gap:8px;padding:2px 0}
 .tg svg{transition:transform .2s}.tbl.closed .tg svg{transform:rotate(-90deg)}
 .tbl.closed .sc,.tbl.closed #ex,.tbl.closed .pager{display:none}
-.fil.closed .tg svg{transform:rotate(-90deg)}.fil.closed #fbody{display:none}.fh{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.fil.closed .fh{margin:0}.tbl.closed .top{margin-bottom:0}
+#fbody{display:grid;gap:12px}.fil.closed .tg svg{transform:rotate(-90deg)}.fil.closed #fbody{display:none}.fh{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.fil.closed .fh{margin:0}.tbl.closed .top{margin-bottom:0}
 .pager{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
 .pager .pgs{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--mut)}
 .pager select{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:5px 8px}
@@ -89,6 +89,7 @@ tr:hover td{background:color-mix(in srgb,var(--ac) 7%,transparent)}
 .bk .v{font-weight:800;font-size:1.15rem;font-variant-numeric:tabular-nums;margin:2px 0 6px}
 .bk input{width:100%;background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:4px 8px;font-size:.8rem}
 .eye{background:none;border:0;cursor:pointer;line-height:1;padding:2px 4px;margin-left:4px;opacity:.65;vertical-align:middle;color:inherit;font:inherit}
+#ey{display:inline-flex;align-items:center;gap:6px}#ey svg{display:block}
 .eye:hover,.eye:focus-visible{opacity:1}.eye svg{display:block}
 </style>
 </head>
@@ -103,7 +104,7 @@ tr:hover td{background:color-mix(in srgb,var(--ac) 7%,transparent)}
 
 <section class="panel filters fil" aria-label="Filter">
   <div class="top fh"><button type="button" class="tg" id="tgf" aria-expanded="true" aria-controls="fbody" title="Buka/tutup filter"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg><b>Filter</b></button><span class="sub" id="fsum"></span></div>
-  <div id="fbody" style="display:grid;gap:12px">
+  <div id="fbody">
   <div class="row" id="per"></div>
   <div class="row">
     <div><label for="fr">Dari</label><input type="date" id="fr"></div>
@@ -219,7 +220,9 @@ async function load(){
   rows.forEach(r=>{r.s=r.s||'form'});
   bbmRaw.filter(x=>x.d>=BBM_FROM).forEach(x=>rows.push({d:x.d,t:'out',a:x.a,n:`BBM ${x.j} – ${x.k}`,s:'bbm',f:'Tunai',to:'',ac:'Tunai →'}));
   rows.push(...LT());
-  $('src').textContent=(live?'● Live dari Google Sheets':'Data contoh (snapshot)')+(skipped.length?` · ${skipped.length} baris dilewati`:'');$('src').title=skipped.join('\n');if(skipped.length)console.warn('Baris dilewati:',skipped);$('src').textContent+=(bbmOk?' · BBM ✓':' · BBM gagal dimuat')+(ign?` · ${ign} catatan BBM di sheet utama diabaikan`:'');$('src').className='badge'+(live?' live':'');
+  const info=[live?'Live dari Google Sheets':'Data contoh (snapshot), sheet tidak bisa dimuat'];if(skipped.length)info.push(`${skipped.length} baris dilewati`);info.push(bbmOk?'BBM berhasil dimuat':'BBM gagal dimuat');if(ign)info.push(`${ign} catatan BBM di sheet utama diabaikan`);
+  $('src').textContent=live?'● Live'+(skipped.length||!bbmOk?' ⚠':''):'Data contoh (snapshot)';$('src').title=info.join('\n')+(skipped.length?'\n\nBaris dilewati:\n'+skipped.join('\n'):'');if(skipped.length)console.warn('Baris dilewati:',skipped);
+  $('src').className='badge'+(live?' live':'');
   $('upd').textContent='diperbarui '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
   render()}
 
@@ -245,7 +248,7 @@ const EYE_OFF='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" strok
 const eyeBtn=k=>`<button type="button" class="eye" data-eye="${k}" aria-pressed="${vis(k)}" aria-label="${vis(k)?'Sembunyikan':'Tampilkan'} nominal">${vis(k)?EYE_ON:EYE_OFF}</button>`;
 
 function render(){
-  const l=filtered(),B=balances(),awal=B.awal,all=sum(rows,'in')-sum(rows,'out')+awal;$('awal').value=mk('awal',rp0(awal));$('eawal').innerHTML=eyeBtn('awal');$('ey').textContent=ALL?'Sembunyikan semua':'Tampilkan semua';document.querySelectorAll('.ecs').forEach(el=>el.innerHTML=eyeBtn('cht'));$('tha').innerHTML='Jumlah ↕ '+eyeBtn('tbl');bankUI(B);
+  const l=filtered(),B=balances(),awal=B.awal,all=sum(rows,'in')-sum(rows,'out')+awal;$('awal').value=mk('awal',rp0(awal));$('eawal').innerHTML=eyeBtn('awal');$('ey').innerHTML=(ALL?'Sembunyikan semua':'Tampilkan semua')+(ALL?EYE_ON:EYE_OFF);$('ey').setAttribute('aria-pressed',ALL);document.querySelectorAll('.ecs').forEach(el=>el.innerHTML=eyeBtn('cht'));$('tha').innerHTML='Jumlah ↕ '+eyeBtn('tbl');bankUI(B);
   $('k-saldo').innerHTML=mk('saldo',rp(all))+eyeBtn('saldo');$('k-in').innerHTML=mk('in',rp0(sum(l,'in')))+eyeBtn('in');$('k-out').innerHTML=mk('out',rp0(sum(l,'out')))+eyeBtn('out');$('k-tf').innerHTML=mk('tf',rp0(sum(l,'tf')))+eyeBtn('tf');
   const bv=n=>B.m[n]?B.m[n].a+B.m[n].s:0,tot=Object.values(B.m).reduce((x,y)=>x+y.a+y.s,0),pf=['Bareksa','Jago-Stockbit RDN-1882','Saham Stockbit'].reduce((x,n)=>x+bv(n),0),tn=bv('Tunai'),bk=tot-tn-pf,r2=x=>Math.round(x*100)/100;
   $('k-sb').innerHTML=mk('sb',rp(r2(bk)))+eyeBtn('sb');$('k-st').innerHTML=mk('st',rp(r2(tn)))+eyeBtn('st');$('k-sp').innerHTML=mk('sp',rp(r2(pf)))+eyeBtn('sp');
