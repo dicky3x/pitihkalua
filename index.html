@@ -44,7 +44,11 @@ h1{font-size:1.5rem;font-weight:800;margin:0;letter-spacing:-.02em}
 .tt{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .tg{background:none;border:0;cursor:pointer;color:inherit;font:inherit;display:flex;align-items:center;gap:8px;padding:2px 0}
 .tg svg{transition:transform .2s}.tbl.closed .tg svg{transform:rotate(-90deg)}
-.tbl.closed .sc,.tbl.closed #ex{display:none}.tbl.closed .top{margin-bottom:0}
+.tbl.closed .sc,.tbl.closed #ex,.tbl.closed .pager{display:none}.tbl.closed .top{margin-bottom:0}
+.pager{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.pager .pgs{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--mut)}
+.pager select{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:5px 8px}
+.pager .btn:disabled{opacity:.4;cursor:default}
 .sc{max-height:420px;overflow:auto;border-radius:10px;border:1px solid var(--bd)}
 table{width:100%;border-collapse:collapse;font-size:.9rem}
 th,td{padding:10px 12px;text-align:left;white-space:nowrap}
@@ -90,7 +94,7 @@ tr:hover td{background:color-mix(in srgb,var(--ac) 7%,transparent)}
   <div><h1>Pitih Kalua</h1><div class="sub">Catatan pemasukan dan pengeluaran · <span id="upd">memuat…</span></div></div>
   <div class="row"><span id="src" class="badge">…</span>
     <button class="btn" id="rf" title="Muat ulang data dari Google Sheets">Muat ulang</button>
-    <button class="btn" id="sc">📷 Scan struk</button><button class="btn" id="ey">Tampilkan semua</button><button class="btn" id="th" aria-label="Ganti tema">🌙</button><button class="btn" id="lo">Keluar</button></div>
+    <button class="btn" id="mn">✍️ Input manual</button><button class="btn" id="sc">📷 Scan struk</button><button class="btn" id="ey">Tampilkan semua</button><button class="btn" id="th" aria-label="Ganti tema">🌙</button><button class="btn" id="lo">Keluar</button></div>
 </header>
 
 <section class="panel filters" aria-label="Filter">
@@ -127,6 +131,7 @@ tr:hover td{background:color-mix(in srgb,var(--ac) 7%,transparent)}
   <div class="sc" id="tsc"><table><thead><tr>
     <th data-k="d">Tanggal ↕</th><th data-k="t">Jenis ↕</th><th data-k="ac">Rekening ↕</th><th data-k="n">Keterangan ↕</th><th data-k="a" class="r" id="tha">Jumlah ↕</th></tr></thead>
     <tbody id="tb"></tbody></table><div id="em" class="empty" hidden>Tidak ada transaksi yang cocok. Ubah atau reset filter.</div></div>
+  <div class="pager" id="pgr"><label class="pgs">Baris per halaman <select id="pgn"><option>10</option><option>25</option><option>50</option><option>100</option><option value="all">Semua</option></select></label><span class="sub" id="pgi"></span><div class="row"><button class="btn" id="pg1" aria-label="Halaman pertama">«</button><button class="btn" id="pgp" aria-label="Halaman sebelumnya">‹</button><span class="sub" id="pgc"></span><button class="btn" id="pgx" aria-label="Halaman berikutnya">›</button><button class="btn" id="pgz" aria-label="Halaman terakhir">»</button></div></div>
 </section>
 </div>
 
@@ -138,15 +143,17 @@ tr:hover td{background:color-mix(in srgb,var(--ac) 7%,transparent)}
 <aside id="ch" class="dr" hidden><div class="dh"><b>Tanya AI keuangan</b><button class="btn" id="cx" aria-label="Tutup">✕</button></div>
 <div id="ms"></div><div class="row" id="sg"></div>
 <div class="row" style="flex-wrap:nowrap"><input id="ci" placeholder="Tanya sesuatu…"><button class="btn on" id="cs">Kirim</button></div></aside>
-<div id="sm" class="ov" hidden><div class="card" style="max-width:440px"><div class="dh"><b>Catat dari gambar</b><button class="btn" id="sx" aria-label="Tutup">✕</button></div>
-<div class="row"><button class="btn on" id="b1">📷 Foto struk</button><button class="btn" id="b2">🖼️ Pilih gambar</button></div>
+<div id="sm" class="ov" hidden><div class="card" style="max-width:440px"><div class="dh"><b id="smt">Catat transaksi</b><button class="btn" id="sx" aria-label="Tutup">✕</button></div>
+<div class="row" id="md"><button class="btn" id="m1">✍️ Manual</button><button class="btn" id="m2">📷 Dari gambar</button></div>
+<div id="sg2" class="row"><button class="btn on" id="b1">📷 Foto struk</button><button class="btn" id="b2">🖼️ Pilih gambar</button></div>
 <img id="sp" alt="Pratinjau" hidden><p id="ss" class="sub" style="margin:0"></p>
 <div id="sf" hidden style="display:grid;gap:8px"><div><label for="sd">Tanggal</label><input type="date" id="sd"></div>
-<div><label for="sj">Jenis</label><select id="sj"><option value="out">Uang keluar</option><option value="in">Uang masuk</option></select></div>
-<div><label for="sr">Rekening</label><select id="sr"><option value="">(belum ditandai)</option></select></div>
-<div><label for="sa">Jumlah (Rp)</label><input type="number" id="sa" min="0" step="any"></div>
+<div><label for="sj">Jenis</label><select id="sj"><option value="out">Uang keluar</option><option value="in">Uang masuk</option><option value="tf">Transfer antar rekening</option></select></div>
+<div><label for="sr" id="srl">Rekening pengirim</label><select id="sr"><option value="">(belum ditandai)</option></select></div>
+<div id="sr2w" hidden><label for="sr2">Rekening penerima</label><select id="sr2"><option value="">(pilih rekening)</option></select></div>
+<div><label for="sa">Jumlah (Rp)</label><input type="number" id="sa" min="0" step="any" inputmode="decimal"></div>
 <div><label for="sn">Keterangan</label><input id="sn" maxlength="80"></div>
-<button class="btn on" id="sv">Simpan sebagai transaksi</button></div></div></div>
+<button class="btn on" id="sv">Simpan transaksi</button></div></div></div>
 <input type="file" id="f1" accept="image/*" capture="environment" hidden><input type="file" id="f2" accept="image/*" hidden>
 <div id="tt" class="toast" hidden></div>
 <script>
@@ -161,6 +168,7 @@ const rp0=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maxi
 const TL={in:'Uang masuk',out:'Uang keluar',tf:'Transfer'};
 const PERS=[['all','Semua'],['today','Hari ini'],['7','7 hari'],['month','Bulan ini'],['custom','Kustom']];
 const store={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+let pg={n:(()=>{const v=localStorage.getItem('pgn');return ['10','25','50','100','all'].includes(v)?v:'10'})(),p:1},psig='';
 let rows=[],f={per:'all',fr:'',to:'',ty:'all',q:'',acc:''},sort={k:'d',dir:-1},ch1,ch2,live=false;
 
 function parseCSV(t){const o=[];let r=[],c='',q=false;for(let i=0;i<t.length;i++){const x=t[i];if(q){if(x=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=x}else if(x=='"')q=true;else if(x==','){r.push(c);c=''}else if(x=='\n'||x=='\r'){if(x=='\r'&&t[i+1]=='\n')i++;r.push(c);o.push(r);r=[];c=''}else c+=x}
@@ -229,8 +237,14 @@ function render(){
   const net=sum(l,'in')-sum(l,'out');$('n-net').textContent='Selisih periode ini: '+(vis('in')&&vis('out')?(net>=0?'+':'−')+rp0(Math.abs(net)):MASK);
   $('per').innerHTML=PERS.map(([k,v])=>`<button class="btn${f.per==k?' on':''}" data-p="${k}">${v}</button>`).join('');
   $('cnt').textContent=`(${l.length} dari ${rows.length})`;
-  const s=[...l].sort((x,y)=>{const a=x[sort.k],b=y[sort.k];return(a>b?1:a<b?-1:0)*sort.dir});
-  $('tb').innerHTML=s.map(r=>`<tr><td>${fd(r.d)}</td><td><span class="tag t-${r.t}">${TL[r.t]}</span></td><td>${r.ac||'–'}</td><td>${r.n.replace(/[<&]/g,c=>c=='<'?'&lt;':'&amp;')||'–'}${srcTag(r)}</td><td class="r" style="color:var(--${r.t})">${r.t=='in'?'+':r.t=='out'?'−':''}${mk('tbl',rp(r.a))}</td></tr>`).join('');
+  rows.forEach((r,i)=>r._i=i);
+  const s=[...l].sort((x,y)=>{const a=x[sort.k],b=y[sort.k];const c=a>b?1:a<b?-1:0;return c?c*sort.dir:y._i-x._i});
+  const sig=JSON.stringify([f,sort]);if(sig!==psig){pg.p=1;psig=sig}
+  const per=pg.n=='all'?(s.length||1):+pg.n,pages=Math.max(1,Math.ceil(s.length/per));pg.p=Math.min(Math.max(1,pg.p),pages);
+  const st=(pg.p-1)*per,vw=s.slice(st,st+per);
+  $('pgn').value=pg.n;$('pgi').textContent=s.length?`Menampilkan ${st+1}–${st+vw.length} dari ${s.length}`:'Tidak ada data';$('pgc').textContent=`Hal ${pg.p} / ${pages}`;
+  $('pg1').disabled=$('pgp').disabled=pg.p<=1;$('pgx').disabled=$('pgz').disabled=pg.p>=pages;
+  $('tb').innerHTML=vw.map(r=>`<tr><td>${fd(r.d)}</td><td><span class="tag t-${r.t}">${TL[r.t]}</span></td><td>${r.ac||'–'}</td><td>${r.n.replace(/[<&]/g,c=>c=='<'?'&lt;':'&amp;')||'–'}${srcTag(r)}</td><td class="r" style="color:var(--${r.t})">${r.t=='in'?'+':r.t=='out'?'−':''}${mk('tbl',rp(r.a))}</td></tr>`).join('');
   $('em').hidden=l.length>0;charts(l)}
 
 function charts(l){
@@ -262,6 +276,8 @@ $('ty').onchange=()=>{f.ty=$('ty').value;render()};
 $('q').oninput=()=>{f.q=$('q').value.trim();render()};
 $('rs').onclick=()=>{f={per:'all',fr:'',to:'',ty:'all',q:'',acc:''};['fr','to','q'].forEach(i=>$(i).value='');$('ty').value='all';render()};
 $('rf').onclick=load;
+$('pgn').onchange=()=>{pg.n=$('pgn').value;pg.p=1;store.set('pgn',pg.n);render()};
+$('pg1').onclick=()=>{pg.p=1;render()};$('pgp').onclick=()=>{pg.p--;render()};$('pgx').onclick=()=>{pg.p++;render()};$('pgz').onclick=()=>{pg.p=1e9;render()};
 // Collapse/expand tabel transaksi
 const tblEl=document.querySelector('.tbl');
 function setTbl(o){tblEl.classList.toggle('closed',!o);$('tgt').setAttribute('aria-expanded',o);store.set('tblopen',o?'1':'0')}
@@ -283,7 +299,7 @@ theme(store.get('theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'da
 const BBM_ID='1AJJPWNsTRBUXMYbz-XOYcCs0025zG2t_dyqxUpNDFTc',BBM_TAB='Form Responses 1',BBM_FROM='2026-11-01',BBM_RE=/bbm|bensin|pertalite|pertamax|solar|dexlite|turbo/i;
 let bbmRaw=[],bbmOk=false,ign=0,tm=null,chat=[];
 const LT=()=>{try{return JSON.parse(store.get('lt')||'[]')}catch(e){return[]}};
-const srcTag=r=>r.s=='bbm'?' <span class="tag t-tf">⛽ sheet BBM</span>':r.s=='scan'?' <span class="tag t-in">📷 scan (lokal)</span>':'';
+const srcTag=r=>r.s=='bbm'?' <span class="tag t-tf">⛽ sheet BBM</span>':r.s=='scan'?' <span class="tag t-in">📷 scan (lokal)</span>':r.s=='manual'?' <span class="tag t-in">✍️ manual (lokal)</span>':'';
 async function loadBBM(){try{const r=await fetch(`https://docs.google.com/spreadsheets/d/${BBM_ID}/gviz/tq?tqx=out:json&headers=1&sheet=${encodeURIComponent(BBM_TAB)}`,{cache:'no-store'});if(!r.ok)throw 0;const t=await r.text();
   bbmRaw=JSON.parse(t.slice(t.indexOf('{'),t.lastIndexOf('}')+1)).table.rows.map(r=>{const c=r.c.map(x=>x?(x.v!=null?x.v:(x.f!=null?x.f:'')):'');
     return{d:gd(c[1]),k:c[2],j:c[3],a:typeof c[5]=='number'?c[5]:num(c[5]),km:c[6]}}).filter(x=>x.d&&x.a>0);bbmOk=true}catch(e){bbmRaw=[];bbmOk=false}}
@@ -316,17 +332,35 @@ $('cs').onclick=()=>{const v=$('ci').value.trim();$('ci').value='';ask(v)};$('ci
 async function shrink(f){const im=await createImageBitmap(f),k=Math.min(1,1400/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.8)}
 async function onPic(f){if(!f)return;$('sf').hidden=true;$('ss').textContent='AI sedang membaca gambar…';
   try{const data=await shrink(f);$('sp').src=data;$('sp').hidden=false;const r=await post('/api/scan',{image:data});if(r.status==401)return location.reload();const j=await r.json();if(!r.ok)throw new Error(j.error||r.status);
-    $('sd').value=j.tanggal||iso(new Date());$('sj').value=j.jenis;$('sa').value=j.jumlah||'';$('sn').value=j.keterangan||'';$('sf').hidden=false;$('ss').textContent='Periksa hasil bacaan AI, perbaiki jika perlu, lalu simpan.'}
+    $('sd').value=j.tanggal||iso(new Date());$('sj').value=['in','out','tf'].includes(j.jenis)?j.jenis:'out';$('sr').value='';$('sr2').value='';fldUI();$('sa').value=j.jumlah||'';$('sn').value=j.keterangan||'';$('sf').hidden=false;$('ss').textContent='Periksa hasil bacaan AI, perbaiki jika perlu, lalu simpan.'}
   catch(e){$('ss').textContent='Gagal membaca gambar: '+e.message}}
-$('sc').onclick=()=>{$('sm').hidden=false;$('sf').hidden=true;$('sp').hidden=true;$('ss').textContent='Foto struk atau pilih screenshot transaksi.'};
+// Form transaksi: mode manual atau dari gambar
+let smode='scan';
+function fldUI(){const t=$('sj').value;
+  $('srl').textContent=t=='in'?'Masuk ke rekening (penerima)':t=='tf'?'Dari rekening (pengirim)':'Dibayar dari rekening (pengirim)';
+  $('sr2w').hidden=t!='tf';$('sr2').required=t=='tf';
+  $('sr').options[0].textContent=t=='tf'?'(pilih rekening)':'(belum ditandai)'}
+function openTx(m){smode=m;$('sm').hidden=false;$('sp').hidden=true;
+  $('m1').classList.toggle('on',m=='manual');$('m2').classList.toggle('on',m=='scan');
+  $('sg2').hidden=m!='scan';$('smt').textContent=m=='manual'?'Catat transaksi manual':'Catat dari gambar';
+  if(m=='manual'){$('sf').hidden=false;$('ss').textContent='Isi detail transaksi lalu simpan.';
+    $('sd').value=iso(new Date());$('sj').value='out';$('sr').value='';$('sr2').value='';$('sa').value='';$('sn').value='';fldUI()}
+  else{$('sf').hidden=true;$('ss').textContent='Foto struk atau pilih screenshot transaksi.'}}
+$('sc').onclick=()=>openTx('scan');$('mn').onclick=()=>openTx('manual');
+$('m1').onclick=()=>openTx('manual');$('m2').onclick=()=>openTx('scan');
+$('sj').onchange=fldUI;
 $('sx').onclick=()=>$('sm').hidden=true;$('b1').onclick=()=>$('f1').click();$('b2').onclick=()=>$('f2').click();
 $('f1').onchange=$('f2').onchange=e=>{onPic(e.target.files[0]);e.target.value=''};
-$('sv').onclick=async()=>{const t={d:$('sd').value,t:$('sj').value,a:parseFloat($('sa').value),n:$('sn').value.trim(),r:$('sr').value};
+$('sv').onclick=async()=>{const t={d:$('sd').value,t:$('sj').value,a:parseFloat($('sa').value),n:$('sn').value.trim()},r1=$('sr').value,r2=$('sr2').value;
   if(!t.d||!(t.a>0)){$('ss').textContent='Tanggal dan jumlah wajib diisi.';return}
-  let ok=false,st=0,em='';try{const r=await post('/api/add',t);ok=r.ok;st=r.status;if(!ok){const j=await r.json().catch(()=>({}));em=j.error||''}}catch(e){}
-  $('sm').hidden=true;
-  if(ok){toast('Tersimpan ke Google Sheets ✓');setTimeout(load,1500)}
-  else{const l=LT();const q={...t,s:'scan',...acct(t.t,t.r,t.r,'','')};l.push(q);store.set('lt',JSON.stringify(l));rows.push(q);render();toast('Tersimpan di perangkat ini ('+(st==501?'Google Form belum dikonfigurasi':'gagal kirim ke Google Form'+(em?': '+em:''))+')')}};
+  if(t.t=='tf'){if(!r1||!r2){$('ss').textContent='Transfer butuh rekening pengirim dan penerima.';return}if(r1==r2){$('ss').textContent='Rekening pengirim dan penerima tidak boleh sama.';return}}
+  if(t.t=='out')t.from=r1;else if(t.t=='in')t.to=r1;else{t.from=r1;t.to=r2}
+  const src=smode=='manual'?'manual':'scan';
+  $('sv').disabled=true;let ok=false,st=0,em='',wn=[];
+  try{const r=await post('/api/add',t);ok=r.ok;st=r.status;if(r.status==401)return location.reload();const j=await r.json().catch(()=>({}));if(ok)wn=j.warn||[];else em=j.error||''}catch(e){}
+  $('sv').disabled=false;$('sm').hidden=true;
+  if(ok){toast(wn.length?'Tersimpan, tapi: '+wn.join('; '):'Tersimpan ke Google Sheets ✓');setTimeout(load,1500)}
+  else{const l=LT();const q={d:t.d,t:t.t,a:t.a,n:t.n,s:src,...acct(t.t,t.from||'',t.to||'',t.from||'',t.to||'')};l.push(q);store.set('lt',JSON.stringify(l));rows.push(q);render();toast('Tersimpan di perangkat ini ('+(st==501?'Google Form belum dikonfigurasi':'gagal kirim ke Google Form'+(em?': '+em:''))+')')}};
 // Rekening bank
 const BANKS=['BRI','BSI','Shopeepay','Seabank','Superbank-OVO-1277','Superbank-Utama-8378','Jago-Gopay Tab-3972','Jago-Utama-9784','Jago-Gopay Simp-2102','Jago-Stockbit RDN-1882','Dana','Allo Bank-7476','Bareksa','Tunai'];
 const UNT='_',ULBL='Belum ditandai rekening';
@@ -348,6 +382,7 @@ $('bk').onclick=e=>{if(e.target.tagName=='INPUT'||e.target.closest('[data-eye]')
 $('bk').onchange=e=>{const n=e.target.dataset.a;if(n==null)return;const ab=AB();ab[n]=parseFloat(e.target.value)||0;store.set('awalb',JSON.stringify(ab));render()};
 $('ak').onchange=()=>{f.acc=$('ak').value;render()};
 $('sr').innerHTML+=BANKS.map(b=>`<option>${b}</option>`).join('');
+$('sr2').innerHTML+=BANKS.map(b=>`<option>${b}</option>`).join('');
 boot();
 </script>
 </body>
