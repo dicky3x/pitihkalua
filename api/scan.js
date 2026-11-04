@@ -8,7 +8,7 @@ module.exports = async (req, res) => {
   const prompt = `Ini foto struk belanja atau screenshot transaksi (bank, e-wallet, marketplace). Ekstrak satu transaksi. Balas HANYA satu objek JSON: {"tanggal":"YYYY-MM-DD" atau null,"jumlah":angka total yang dibayar tanpa pemisah ribuan (desimal pakai titik),"keterangan":"nama toko atau penerima + ringkasan barang, maks 60 karakter","jenis":"out" atau "in"}. Angka Indonesia "Rp 1.250.000" berarti 1250000. Pakai TOTAL akhir yang dibayar, bukan subtotal atau kembalian. Jika tanggal tidak terbaca isi null. Hari ini ${today}. Isi "in" hanya jika jelas uang masuk ke pengguna.`;
   try {
     const txt = await L.groq({
-      model: process.env.GROQ_VISION_MODEL || 'qwen/qwen3.6-27b',
+      model: process.env.GROQ_VISION_MODEL || 'qwen/qwen3.8-27b',
       messages: [{ role: 'user', content: [{ type: 'text', text: prompt }, { type: 'image_url', image_url: { url: img } }] }],
       temperature: 0, max_tokens: 1500
     });
